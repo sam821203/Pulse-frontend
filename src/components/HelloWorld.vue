@@ -64,7 +64,7 @@ const getStockData = () => {
 const getDetail = () => {
   // Google CORS
   // https://script.google.com/macros/s/AKfycby_BUVtVI9vXu5H50LcedmZ78eUKNXP2zchdQ00tSauGEJC41fpePFdLoYWbXeVYNKISA/exec
-  fetch('/api?ex_ch=tse_2330.tw|otc_6488.tw&json=1&delay=0', {
+  fetch('/api/getStockInfo.jsp?ex_ch=tse_2330.tw|otc_6488.tw&json=1&delay=0', {
     headers: {
       'Access-Control-Allow-Origin': '*'
     }

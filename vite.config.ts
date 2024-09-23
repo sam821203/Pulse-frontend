@@ -39,8 +39,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://mis.twse.com.tw/stock/api/getStockInfo.jsp',
-        changeOrigin: true
+        target: 'https://mis.twse.com.tw/stock/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   }
