@@ -6,6 +6,16 @@ defineProps<{
 const stockNo = ref('')
 const stockNo2 = ref('')
 
+// 每日市場成交資訊
+// 'https://www.twse.com.tw/exchangeReport/FMTQIK?response=json&date=20220701'
+
+fetch('https://www.twse.com.tw/exchangeReport/FMTQIK')
+  .then((response) => response.json())
+  .then((res) => {
+    console.log('res: ', res)
+  })
+  .catch((err) => console.error(err))
+
 const getStockData = () => {
   const apiUrl: string = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY' // api 呼叫網址
   let dailyRow: any[] = []
