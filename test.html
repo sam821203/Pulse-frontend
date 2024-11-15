@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script
+      type="text/javascript"
+      src="https://script.google.com/macros/s/AKfycby_BUVtVI9vXu5H50LcedmZ78eUKNXP2zchdQ00tSauGEJC41fpePFdLoYWbXeVYNKISA/exec"
+    >
+
+        fetch(
+          'https://script.google.com/macros/s/AKfycby_BUVtVI9vXu5H50LcedmZ78eUKNXP2zchdQ00tSauGEJC41fpePFdLoYWbXeVYNKISA/exec?stockID=tse_2330.tw'
+        )
+          .then((response) => response.json())
+          .then((data) => console.log(data))
+          .catch((err) => console.error(err))
+
+      console.log('12');
+    </script>
+  </body>
+</html>
