@@ -37,12 +37,17 @@ export default defineConfig({
     }
   },
   server: {
+    port: 8090,
     proxy: {
       '/api': {
-        target: 'https://mis.twse.com.tw/stock/api',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        target: 'http://localhost:3000',
+        changeOrigin: true
       }
+      // '/api': {
+      //   target: 'https://mis.twse.com.tw/stock/api',
+      //   changeOrigin: true,
+      //   rewrite: (path) => path.replace(/^\/api/, '')
+      // }
     }
   }
 })
