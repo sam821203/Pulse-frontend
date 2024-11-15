@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { getTwse } from '../api/twse/index'
+
+getTwse().then((res) => {
+  console.log(res)
+})
+
 defineProps<{
   msg: string
 }>()
