@@ -1,26 +1,26 @@
 <script setup lang="ts">
 import { getTwse } from '../api/twse/index'
 
-getTwse().then((res) => {
-  console.log(res)
-})
+// getTwse().then((res) => {
+//   console.log(res)
+// })
 
 defineProps<{
   msg: string
 }>()
 
 const stockNo = ref('')
-const stockNo2 = ref('')
+const stockNo2 = ref('2330')
 
 // 每日市場成交資訊
 // 'https://www.twse.com.tw/exchangeReport/FMTQIK?response=json&date=20220701'
 
-fetch('https://www.twse.com.tw/exchangeReport/FMTQIK')
-  .then((response) => response.json())
-  .then((res) => {
-    console.log('res: ', res)
-  })
-  .catch((err) => console.error(err))
+// fetch('https://www.twse.com.tw/exchangeReport/FMTQIK')
+//   .then((response) => response.json())
+//   .then((res) => {
+//     console.log('res: ', res)
+//   })
+//   .catch((err) => console.error(err))
 
 const getStockData = () => {
   const apiUrl: string = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY' // api 呼叫網址
@@ -127,10 +127,10 @@ const fieldLabels = {
 
 // TODO: 寫排程，每5秒，取一次 API
 const getDetail = () => {
-  fetch(`/api/getStockInfo.jsp?ex_ch=${listedCompany}_${stockNo2.value}.tw&json=1&delay=0`)
+  fetch(`/api/stock/getStockInfo.jsp?ex_ch=${listedCompany}_${stockNo2.value}.tw&json=1&delay=0`)
     .then((response) => response.json())
     .then((data) => {
-      console.log(data)
+      console.log('資料：', data.msgArray)
       // f 揭示賣量(配合「a」，以_分隔資料)
       stockData.sellVolume = data.msgArray[0].f
       // ex 上市別(上市:tse，上櫃:otc，空白:已下市或下櫃)
