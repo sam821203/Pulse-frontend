@@ -1,14 +1,61 @@
-<script setup lang="ts">
-// import { DArrowLeft } from "@element-plus/icons-vue";
-// import MainNavbar from "@/components/MainNavbar.vue";
-// import MainMenu from "@/components/MainMenu.vue";
-import { RouterLink, RouterView } from 'vue-router'
-import Button from 'primevue/button'
+<script setup>
+import { useLayout } from '@/layout/composables/layout'
+import { computed, ref, watch } from 'vue'
+import MainFooter from '@/components/MainFooter.vue'
+import MainMenu from '@/components/MainMenu.vue'
+import MainTopbar from '@/components/MainTopbar.vue'
 
-const isVisible = ref(true)
+const { layoutConfig, layoutState, isSidebarActive, resetMenu } = useLayout()
 
-const handleToggle = () => {
-  isVisible.value = !isVisible.value
+const outsideClickListener = ref(null)
+
+watch(isSidebarActive, (newVal) => {
+  if (newVal) {
+    bindOutsideClickListener()
+  } else {
+    unbindOutsideClickListener()
+  }
+})
+
+const containerClass = computed(() => {
+  return {
+    'layout-overlay': layoutConfig.menuMode === 'overlay',
+    'layout-static': layoutConfig.menuMode === 'static',
+    'layout-static-inactive':
+      layoutState.staticMenuDesktopInactive && layoutConfig.menuMode === 'static',
+    'layout-overlay-active': layoutState.overlayMenuActive,
+    'layout-mobile-active': layoutState.staticMenuMobileActive
+  }
+})
+
+function bindOutsideClickListener() {
+  if (!outsideClickListener.value) {
+    outsideClickListener.value = (event) => {
+      if (isOutsideClicked(event)) {
+        resetMenu()
+      }
+    }
+    document.addEventListener('click', outsideClickListener.value)
+  }
+}
+
+function unbindOutsideClickListener() {
+  if (outsideClickListener.value) {
+    document.removeEventListener('click', outsideClickListener)
+    outsideClickListener.value = null
+  }
+}
+
+function isOutsideClicked(event) {
+  const sidebarEl = document.querySelector('.layout-sidebar')
+  const topbarEl = document.querySelector('.layout-menu-button')
+
+  return !(
+    sidebarEl.isSameNode(event.target) ||
+    sidebarEl.contains(event.target) ||
+    topbarEl.isSameNode(event.target) ||
+    topbarEl.contains(event.target)
+  )
 }
 </script>
 
@@ -27,122 +74,19 @@ const handleToggle = () => {
   <div class="main-container flex flex-col">
     <RouterView />
   </div> -->
-  <Button label="Submit" />
-
-  <main class="default-layout">
-    <aside :class="['default-sidebar', { 'is-show': isVisible }]">
-      <router-link to="/" class="logo">
-        <img class="logo-img" src="@/assets/images/logo.svg" alt="Govern.IQ" />
-      </router-link>
-      <MainMenu :isCollapse="!isVisible" />
-      <!-- <el-button class="btn-toggle" @click="handleToggle">
-        <el-icon><DArrowLeft /></el-icon>
-      </el-button> -->
-    </aside>
-    <section class="container">
-      <!-- <MainNavbar />
-      <el-scrollbar wrap-class="content-container">
-    </el-scrollbar> -->
-      <RouterView />
-    </section>
-  </main>
+  <div class="layout-wrapper" :class="containerClass">
+    <MainTopbar />
+    <div class="layout-sidebar">
+      <MainMenu />
+    </div>
+    <div class="layout-main-container">
+      <div class="layout-main">
+        <RouterView />
+      </div>
+      <MainFooter />
+    </div>
+    <div class="layout-mask animate-fadein"></div>
+  </div>
 </template>
 
-<style lang="scss">
-.default-layout {
-  position: relative;
-  display: flex;
-  padding: 32px 24px;
-  gap: 26px;
-  background-color: #f2f3f5;
-  box-sizing: border-box;
-
-  .logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
-    height: 70px;
-    font-size: 18px;
-    font-weight: 700;
-    text-decoration: none;
-    color: #303133;
-    border-bottom: 1px solid #e4e7ed;
-  }
-
-  .icon-logo {
-    width: 28px;
-    height: 28px;
-  }
-
-  .logo-img {
-    width: 0;
-    height: 44px;
-    transition-property: width;
-    transition-delay: 0.3s;
-    overflow: hidden;
-  }
-
-  .container {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 24px;
-    min-width: 0;
-  }
-
-  .el-scrollbar {
-    flex: 1;
-  }
-
-  .default-sidebar {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    width: 54px;
-    background-color: #fff;
-    border-radius: 4px;
-    box-shadow: 0 0 12px 0 rgba($color: #000000, $alpha: 0.12);
-    transition: width 0.2s;
-
-    &.is-show {
-      width: 200px;
-
-      .btn-toggle {
-        .el-icon {
-          transform: rotate(0);
-        }
-      }
-
-      .icon-logo {
-        display: none;
-      }
-
-      .logo-img {
-        width: auto;
-      }
-    }
-  }
-
-  .btn-toggle {
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    top: 54px;
-    right: -14px;
-    border: 1px solid #e4e7ed;
-    box-shadow: 0 0 12px 0 rgba($color: #000000, $alpha: 0.12);
-    background-color: #f2f3f5;
-    cursor: pointer;
-
-    .el-icon {
-      transform: rotate(180deg);
-    }
-  }
-
-  .content-container {
-    height: var(--content-height);
-  }
-}
-</style>
+<style lang="scss"></style>
