@@ -3,6 +3,7 @@
 // import MainNavbar from "@/components/MainNavbar.vue";
 // import MainMenu from "@/components/MainMenu.vue";
 import { RouterLink, RouterView } from 'vue-router'
+import Button from 'primevue/button'
 
 const isVisible = ref(true)
 
@@ -26,13 +27,14 @@ const handleToggle = () => {
   <div class="main-container flex flex-col">
     <RouterView />
   </div> -->
+  <Button label="Submit" />
+
   <main class="default-layout">
     <aside :class="['default-sidebar', { 'is-show': isVisible }]">
-      <!-- <router-link to="/" class="logo">
-        <img class="icon-logo" src="@/assets/images/logo-icon.svg" alt="Govern.IQ" />
+      <router-link to="/" class="logo">
         <img class="logo-img" src="@/assets/images/logo.svg" alt="Govern.IQ" />
-      </router-link> -->
-      <!-- <MainMenu :isCollapse="!isVisible" /> -->
+      </router-link>
+      <MainMenu :isCollapse="!isVisible" />
       <!-- <el-button class="btn-toggle" @click="handleToggle">
         <el-icon><DArrowLeft /></el-icon>
       </el-button> -->
