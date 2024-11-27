@@ -11,19 +11,13 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
       component: DefaultLayout,
       children: [
         {
           path: '/',
-          name: 'home',
+          name: 'dashboard',
           component: HomeView
         },
-        // {
-        //   path: '/about',
-        //   name: 'about',
-        //   component: () => import('../views/AboutView.vue')
-        // },
         {
           path: '/stock',
           name: 'stock',
@@ -40,18 +34,12 @@ const router = createRouter({
       path: '/error',
       name: 'error',
       component: ErrorView
+    },
+    {
+      path: '/:pathMatch(.*)',
+      name: 'notFound',
+      component: ErrorView
     }
-    // {
-    //   path: '/:pathMatch(.*)',
-    //   name: 'notFound',
-    //   component: ErrorView,
-    //   redirect: '/error'
-    // }
-    // {
-    //   path: '/commonComponents',
-    //   name: 'commonComponents',
-    //   component: CommonComponentsView
-    // },
   ]
 })
 

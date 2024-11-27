@@ -9,7 +9,7 @@ defineProps<{
   msg: string
 }>()
 
-const stockNo = ref('')
+// const stockNo = ref('')
 const stockNo2 = ref('2330')
 
 // 每日市場成交資訊
@@ -22,6 +22,7 @@ const stockNo2 = ref('2330')
 //   })
 //   .catch((err) => console.error(err))
 
+// 查詢各股歷史資料
 const getStockData = () => {
   const apiUrl: string = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY' // api 呼叫網址
   let dailyRow: any[] = []
@@ -173,7 +174,34 @@ const getDetail = () => {
     .catch((err) => console.error(err))
 }
 
-getDetail()
+const initFetchStockDataTime = () => {
+  let delay = 5000
+
+  // 進頁面時請求一次
+  getDetail()
+
+  let timerId = setTimeout(function request() {
+    const now = new Date()
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+    const day = now.getDay()
+
+    // 如果是假日的話，就不用再取資料了
+    if (day === 0 || day === 6) {
+      clearTimeout(timerId)
+      return
+    }
+
+    if (hours >= 9 && (hours < 13 || (hours === 13 && minutes <= 30))) {
+      getDetail()
+      timerId = setTimeout(request, delay)
+    } else {
+      clearTimeout(timerId)
+    }
+  }, delay)
+}
+
+initFetchStockDataTime()
 </script>
 
 <template>

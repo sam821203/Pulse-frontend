@@ -64,7 +64,6 @@ function isOutsideClicked(event) {
     <div class="wrapper">
       <nav>
         <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/stock">Stock</RouterLink>
         <RouterLink to="/login">Login</RouterLink>
       </nav>
