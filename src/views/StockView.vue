@@ -9,7 +9,7 @@ defineProps<{
   msg: string
 }>()
 
-// const stockNo = ref('')
+const stockNo = ref('')
 const stockNo2 = ref('2330')
 
 // 每日市場成交資訊
@@ -126,7 +126,6 @@ const fieldLabels = {
   previousClose: '昨收價'
 }
 
-// TODO: 寫排程，每5秒，取一次 API
 const getDetail = () => {
   fetch(`/api/stock/getStockInfo.jsp?ex_ch=${listedCompany}_${stockNo2.value}.tw&json=1&delay=0`)
     .then((response) => response.json())
@@ -186,7 +185,6 @@ const initFetchStockDataTime = () => {
     const minutes = now.getMinutes()
     const day = now.getDay()
 
-    // 如果是假日的話，就不用再取資料了
     if (day === 0 || day === 6) {
       clearTimeout(timerId)
       return
@@ -205,46 +203,6 @@ initFetchStockDataTime()
 </script>
 
 <template>
-  <form class="max-w-md mx-auto mb-10">
-    <label
-      for="default-search"
-      class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-      >Search</label
-    >
-    <div class="relative">
-      <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-        <svg
-          class="w-4 h-4 text-gray-500 dark:text-gray-400"
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 20 20"
-        >
-          <path
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-          />
-        </svg>
-      </div>
-      <input
-        v-model="stockNo"
-        type="search"
-        id="default-search"
-        class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        placeholder="Search Mockups, Logos..."
-        required
-      />
-      <button
-        class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        @click.prevent="getStockData"
-      >
-        Search
-      </button>
-    </div>
-  </form>
   <form class="max-w-md mx-auto">
     <label
       for="default-search"

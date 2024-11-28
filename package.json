@@ -24,6 +24,7 @@
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
+    "@primevue/auto-import-resolver": "^4.2.4",
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/axios": "^0.14.4",
@@ -45,6 +46,7 @@
     "tailwindcss": "^3.4.12",
     "typescript": "~5.4.0",
     "unplugin-auto-import": "^0.18.3",
+    "unplugin-vue-components": "^0.27.5",
     "vite": "^5.3.1",
     "vitest": "^1.6.0",
     "vue-tsc": "^2.0.21"
