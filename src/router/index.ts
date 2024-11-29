@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const HomeView = () => import('@/views/HomeView.vue')
 const LoginView = () => import('@/views/LoginView.vue')
-const RegisterView = () => import('@/views/RegisterView.vue')
 const StockView = () => import('@/views/StockView.vue')
 const ErrorView = () => import('@/views/ErrorView.vue')
 const DefaultLayout = () => import('@/layout/DefaultLayout.vue')
@@ -30,11 +29,6 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: RegisterView
     },
     {
       path: '/error',

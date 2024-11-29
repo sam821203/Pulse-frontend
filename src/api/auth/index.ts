@@ -5,11 +5,18 @@ interface IUser {
   password: string
 }
 
-export const _login = async (user: IUser) => {
-  console.log('user', user)
+export const login = async (user: IUser) => {
   return service({
     method: 'POST',
     url: '/auth/login',
+    data: user
+  })
+}
+
+export const register = async (user: IUser) => {
+  return service({
+    method: 'POST',
+    url: '/user/register',
     data: user
   })
 }

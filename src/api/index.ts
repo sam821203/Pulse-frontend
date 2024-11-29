@@ -28,7 +28,7 @@ service.interceptors.response.use(
     if (response.code !== 0) {
       toastMsg.value = response.msg
     }
-    return res.data.msg
+    return res.data
   },
   (err) => console.log(err)
 )
