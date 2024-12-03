@@ -3,39 +3,18 @@
 // import { storeToRefs } from 'pinia'
 import LoginForm from '@/components/login/LoginForm.vue'
 import RegisterForm from '@/components/login/RegisterForm.vue'
-import { useLoading } from 'vue-loading-overlay'
 
 // const userStore = useUserStore()
 // const { event } = storeToRefs(userStore)
 
 // const checked = ref(false)
 // const currentEvent = ref('login')
-const $loading = useLoading()
-// TODO: 新增成共用
-// https://github.com/ankurk91/vue-loading-overlay
-const loadingConfig = [
-  {
-    color: '#a855f7',
-    loader: 'bars',
-    width: 48,
-    height: 48,
-    backgroundColor: '#ffffff',
-    opacity: 0.75,
-    zIndex: 999
-  },
-  { before: '載入中...' }
-]
-
-const loader = $loading.show(...loadingConfig)
 
 const tabs = ref([
   { title: '登入', value: '0' },
   { title: '註冊', value: '1' }
 ])
 
-setTimeout(() => {
-  loader.hide()
-}, 3000)
 // watch(event, (newEvent) => {
 //   currentEvent.value = newEvent
 // })

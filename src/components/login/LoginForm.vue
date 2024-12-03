@@ -1,13 +1,15 @@
 <script setup>
 import { login } from '../../api/auth/index'
+import router from '@/router/index'
 import { yupResolver } from '@primevue/forms/resolvers/yup'
+import loading from '@/utils/loading'
 import * as yup from 'yup'
 
 // import { useUserStore } from '@/stores'
 
 // const userStore = useUserStore()
 
-const initialValues = reactive({
+const submitData = reactive({
   phone: '0912345678',
   password: '12345678'
 })
@@ -29,21 +31,21 @@ const schema = yup.object().shape({
 const resolver = yupResolver(schema)
 
 const handleLogin = async ({ valid }) => {
-  if (valid) {
-    const res = await login(user.value)
+  loading.start()
+  try {
+    if (valid) {
+      const res = await login(submitData)
 
-    if (res.token) {
-      localStorage.setItem('token', res.token)
-      localStorage.setItem('userId', res.userId)
+      if (res.msg && res.msg.token) {
+        localStorage.setItem('token', res.msg.token)
+        localStorage.setItem('userId', res.msg.userId)
+        router.replace('/')
+      }
     }
-
-    if (res.code === 0) {
-      toast.add({
-        severity: 'success',
-        summary: res.msg,
-        life: 3000
-      })
-    }
+  } catch (error) {
+    console.error('Login error:', error)
+  } finally {
+    loading.stop()
   }
 }
 
@@ -56,7 +58,7 @@ const handleLogin = async ({ valid }) => {
   <div class="rounded-[56px] p-1 bg-gradient-to-b from-primary to-transparent">
     <Form
       v-slot="$form"
-      :initialValues
+      :submitData
       :resolver
       :validateOnValueUpdate="true"
       :validateOnBlur="true"
@@ -68,7 +70,7 @@ const handleLogin = async ({ valid }) => {
           >手機號碼<span class="text-red-500 ml-1">*</span></label
         >
         <InputText
-          v-model="initialValues.phone"
+          v-model="submitData.phone"
           name="phone"
           type="text"
           placeholder="請輸入手機號碼"
@@ -83,11 +85,11 @@ const handleLogin = async ({ valid }) => {
           >密碼<span class="text-red-500 ml-1">*</span></label
         >
         <Password
-          v-model="initialValues.password"
+          v-model="submitData.password"
           name="password"
           type="password"
           placeholder="請輸入密碼"
-          toggleMask
+          :feedback="false"
           fluid
         />
         <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">{{
