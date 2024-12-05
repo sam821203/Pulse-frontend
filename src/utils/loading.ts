@@ -1,6 +1,6 @@
-import { useLoading } from 'vue-loading-overlay'
+import { useLoading, type ActiveLoader } from 'vue-loading-overlay'
 
-let loader
+let loader: ActiveLoader
 
 export default {
   start() {

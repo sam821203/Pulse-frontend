@@ -7,15 +7,12 @@ import * as yup from 'yup'
 const toast = useToast()
 
 const formData = reactive({
-  phone: '',
+  name: '',
   password: ''
 })
 
 const schema = yup.object().shape({
-  phone: yup
-    .string()
-    .matches(/^[0-9]+$/, '手機欄位必須為數字')
-    .required('手機欄位為必填'),
+  name: yup.string().required('名稱欄位為必填'),
   password: yup
     .string()
     .matches(
@@ -53,18 +50,18 @@ const handleRegister = async ({ valid }) => {
       class="flex flex-col gap-4 w-full md:w-[30rem]"
     >
       <div class="flex flex-col gap-1">
-        <label for="phone" class="block text-gray-900 dark:text-white text-xl font-medium mb-2"
-          >手機號碼<span class="text-red-500 ml-1">*</span></label
+        <label for="name" class="block text-gray-900 dark:text-white text-xl font-medium mb-2"
+          >使用者名稱<span class="text-red-500 ml-1">*</span></label
         >
         <InputText
-          v-model="formData.phone"
-          name="phone"
+          v-model="formData.name"
+          name="name"
           type="text"
-          placeholder="請輸入手機號碼"
+          placeholder="請輸入使用者名稱"
           fluid
         />
-        <Message v-if="$form.phone?.invalid" severity="error" size="small" variant="simple">{{
-          $form.phone.error.message
+        <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">{{
+          $form.name.error.message
         }}</Message>
       </div>
       <div class="flex flex-col gap-1">
@@ -76,6 +73,7 @@ const handleRegister = async ({ valid }) => {
           name="password"
           type="password"
           placeholder="請輸入密碼"
+          :feedback="false"
           toggleMask
           fluid
         />

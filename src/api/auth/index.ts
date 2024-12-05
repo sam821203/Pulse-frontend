@@ -1,7 +1,7 @@
 import service from '../index'
 
 interface IUser {
-  phone: string
+  name: string
   password: string
 }
 

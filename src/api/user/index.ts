@@ -6,3 +6,10 @@ export function _hello() {
     url: '/user/hello'
   })
 }
+
+export function getUserInfo(id: string): any {
+  return service({
+    method: 'GET',
+    url: `/user/${id}`
+  })
+}

@@ -10,14 +10,14 @@ import * as yup from 'yup'
 // const userStore = useUserStore()
 
 const submitData = reactive({
-  phone: '0912345678',
-  password: '12345678'
+  name: '',
+  password: ''
 })
 
 const schema = yup.object().shape({
-  phone: yup
+  name: yup
     .string()
-    .matches(/^[0-9]+$/, '手機欄位必須為數字')
+    // .matches(/^[0-9]+$/, '手機欄位必須為數字')
     .required('手機欄位為必填'),
   password: yup
     .string()
@@ -35,10 +35,10 @@ const handleLogin = async ({ valid }) => {
   try {
     if (valid) {
       const res = await login(submitData)
-
-      if (res.msg && res.msg.token) {
-        localStorage.setItem('token', res.msg.token)
-        localStorage.setItem('userId', res.msg.userId)
+      console.log('res:', res)
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token)
+        localStorage.setItem('userId', res.data.userId)
         router.replace('/')
       }
     }
@@ -66,18 +66,18 @@ const handleLogin = async ({ valid }) => {
       class="flex flex-col gap-4 w-full md:w-[30rem]"
     >
       <div class="flex flex-col gap-1">
-        <label for="phone" class="block text-gray-900 dark:text-white text-xl font-medium mb-2"
-          >手機號碼<span class="text-red-500 ml-1">*</span></label
+        <label for="name" class="block text-gray-900 dark:text-white text-xl font-medium mb-2"
+          >使用者名稱<span class="text-red-500 ml-1">*</span></label
         >
         <InputText
-          v-model="submitData.phone"
-          name="phone"
+          v-model="submitData.name"
+          name="name"
           type="text"
-          placeholder="請輸入手機號碼"
+          placeholder="請輸入使用者名稱"
           fluid
         />
-        <Message v-if="$form.phone?.invalid" severity="error" size="small" variant="simple">{{
-          $form.phone.error.message
+        <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">{{
+          $form.name.error.message
         }}</Message>
       </div>
       <div class="flex flex-col gap-1">

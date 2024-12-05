@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { getTwse } from '../api/twse/index'
+// import { getTwse } from '../api/twse/index'
+import MainHeader from '@/components/MainHeader.vue'
 
 // getTwse().then((res) => {
 //   console.log(res)
@@ -203,6 +204,7 @@ initFetchStockDataTime()
 </script>
 
 <template>
+  <MainHeader title="上市股票群組" iconType="UserFilled" />
   <form class="max-w-md mx-auto">
     <label
       for="default-search"
