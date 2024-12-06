@@ -35,7 +35,6 @@ const handleLogin = async ({ valid }) => {
   try {
     if (valid) {
       const res = await login(submitData)
-      console.log('res:', res)
       if (res.data && res.data.token) {
         localStorage.setItem('token', res.data.token)
         localStorage.setItem('userId', res.data.userId)
@@ -90,6 +89,7 @@ const handleLogin = async ({ valid }) => {
           type="password"
           placeholder="請輸入密碼"
           :feedback="false"
+          toggleMask
           fluid
         />
         <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">{{

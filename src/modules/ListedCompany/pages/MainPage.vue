@@ -200,7 +200,7 @@ const initFetchStockDataTime = () => {
   }, delay)
 }
 
-initFetchStockDataTime()
+// initFetchStockDataTime()
 </script>
 
 <template>
