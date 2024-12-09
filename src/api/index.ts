@@ -3,11 +3,6 @@ import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axio
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/modules/toast'
 
-interface IResponse {
-  code: number
-  msg: any
-}
-
 const toastStore = useToastStore()
 const { toastMsg } = storeToRefs(toastStore)
 

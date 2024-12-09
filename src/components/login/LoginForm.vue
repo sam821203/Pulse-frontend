@@ -4,10 +4,13 @@ import router from '@/router/index'
 import { yupResolver } from '@primevue/forms/resolvers/yup'
 import loading from '@/utils/loading'
 import * as yup from 'yup'
+import { useUserStore, useToastStore } from '@/stores'
+import isEmpty from 'lodash/isEmpty'
+import { storeToRefs } from 'pinia'
 
-// import { useUserStore } from '@/stores'
-
-// const userStore = useUserStore()
+const userStore = useUserStore()
+const toastStore = useToastStore()
+const { toastMsg } = storeToRefs(toastStore)
 
 const submitData = reactive({
   name: '',
@@ -35,10 +38,18 @@ const handleLogin = async ({ valid }) => {
   try {
     if (valid) {
       const res = await login(submitData)
-      if (res.data && res.data.token) {
+      if (!isEmpty(res.data)) {
+        console.log('res 1', res)
+
         localStorage.setItem('token', res.data.token)
-        localStorage.setItem('userId', res.data.userId)
-        router.replace('/')
+        try {
+          await userStore.getUserInfoData(res.data.userId)
+          router.replace('/')
+        } catch {
+          console.error('Get user info error')
+        }
+      } else {
+        toastMsg.value = res.msg
       }
     }
   } catch (error) {

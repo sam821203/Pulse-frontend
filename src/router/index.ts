@@ -1,4 +1,5 @@
 import { ListedCompanyRoute } from './modules/listedCompany'
+import { UserRoute } from './modules/user'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const HomeView = () => import('@/views/HomeView.vue')
@@ -16,7 +17,8 @@ const routes = [
         name: 'dashboard',
         component: HomeView
       },
-      ...ListedCompanyRoute
+      ...ListedCompanyRoute,
+      ...UserRoute
     ]
   },
   {

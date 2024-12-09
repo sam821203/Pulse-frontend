@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import router from '@/router'
-import { getUserInfo } from '../api/user/index'
+import { useUserStore } from '@/stores/modules/user'
+
+const userStore = useUserStore()
 
 const handleGetUser = async () => {
-  const res = await getUserInfo('67513ead23b91593f61167e8')
+  const res = await userStore.getUserInfoData('6756a49f61958e097867ee6c')
   console.log('res:', res)
 }
 
