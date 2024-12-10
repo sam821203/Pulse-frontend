@@ -1,21 +1,29 @@
 <script setup lang="ts">
+// import { getTwse } from '../api/twse/index'
+import MainHeader from '@/components/MainHeader.vue'
+
+// getTwse().then((res) => {
+//   console.log(res)
+// })
+
 defineProps<{
   msg: string
 }>()
 
 const stockNo = ref('')
-const stockNo2 = ref('')
+const stockNo2 = ref('2330')
 
 // 每日市場成交資訊
 // 'https://www.twse.com.tw/exchangeReport/FMTQIK?response=json&date=20220701'
 
-fetch('https://www.twse.com.tw/exchangeReport/FMTQIK')
-  .then((response) => response.json())
-  .then((res) => {
-    console.log('res: ', res)
-  })
-  .catch((err) => console.error(err))
+// fetch('https://www.twse.com.tw/exchangeReport/FMTQIK')
+//   .then((response) => response.json())
+//   .then((res) => {
+//     console.log('res: ', res)
+//   })
+//   .catch((err) => console.error(err))
 
+// 查詢各股歷史資料
 const getStockData = () => {
   const apiUrl: string = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY' // api 呼叫網址
   let dailyRow: any[] = []
@@ -119,12 +127,11 @@ const fieldLabels = {
   previousClose: '昨收價'
 }
 
-// TODO: 寫排程，每5秒，取一次 API
 const getDetail = () => {
-  fetch(`/api/getStockInfo.jsp?ex_ch=${listedCompany}_${stockNo2.value}.tw&json=1&delay=0`)
+  fetch(`/api/stock/getStockInfo.jsp?ex_ch=${listedCompany}_${stockNo2.value}.tw&json=1&delay=0`)
     .then((response) => response.json())
     .then((data) => {
-      console.log(data)
+      console.log('資料：', data.msgArray)
       // f 揭示賣量(配合「a」，以_分隔資料)
       stockData.sellVolume = data.msgArray[0].f
       // ex 上市別(上市:tse，上櫃:otc，空白:已下市或下櫃)
@@ -167,50 +174,37 @@ const getDetail = () => {
     .catch((err) => console.error(err))
 }
 
-getDetail()
+const initFetchStockDataTime = () => {
+  let delay = 5000
+
+  // 進頁面時請求一次
+  getDetail()
+
+  let timerId = setTimeout(function request() {
+    const now = new Date()
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+    const day = now.getDay()
+
+    if (day === 0 || day === 6) {
+      clearTimeout(timerId)
+      return
+    }
+
+    if (hours >= 9 && (hours < 13 || (hours === 13 && minutes <= 30))) {
+      getDetail()
+      timerId = setTimeout(request, delay)
+    } else {
+      clearTimeout(timerId)
+    }
+  }, delay)
+}
+
+// initFetchStockDataTime()
 </script>
 
 <template>
-  <form class="max-w-md mx-auto mb-10">
-    <label
-      for="default-search"
-      class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-      >Search</label
-    >
-    <div class="relative">
-      <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-        <svg
-          class="w-4 h-4 text-gray-500 dark:text-gray-400"
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 20 20"
-        >
-          <path
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-          />
-        </svg>
-      </div>
-      <input
-        v-model="stockNo"
-        type="search"
-        id="default-search"
-        class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        placeholder="Search Mockups, Logos..."
-        required
-      />
-      <button
-        class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        @click.prevent="getStockData"
-      >
-        Search
-      </button>
-    </div>
-  </form>
+  <MainHeader title="上市股票群組" iconType="UserFilled" />
   <form class="max-w-md mx-auto">
     <label
       for="default-search"

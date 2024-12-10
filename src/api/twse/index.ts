@@ -1,8 +1,8 @@
 import service from '../index'
 
-export function getUserInfo(id: string): any {
+export function getTwse() {
   return service({
     method: 'GET',
-    url: `/user/${id}`
+    url: '/twse/equities'
   })
 }
