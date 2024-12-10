@@ -39,8 +39,6 @@ const handleLogin = async ({ valid }) => {
     if (valid) {
       const res = await login(submitData)
       if (!isEmpty(res.data)) {
-        console.log('res 1', res)
-
         localStorage.setItem('token', res.data.token)
         try {
           await userStore.getUserInfoData(res.data.userId)

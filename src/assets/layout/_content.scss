@@ -10,3 +10,7 @@
 .layout-main {
   flex: 1 1 auto;
 }
+
+.p-dialog {
+  min-width: 400px !important; /* 固定寬度 */
+}

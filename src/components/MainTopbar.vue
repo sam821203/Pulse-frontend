@@ -1,12 +1,88 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout'
+import { useUserStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { useConfirm } from 'primevue/useconfirm'
+import { logout } from '../api/auth/index'
+import loading from '@/utils/loading'
+
+const router = useRouter()
+const userStore = useUserStore()
+const confirm = useConfirm()
 
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout()
-const router = useRouter()
+const { userInfo } = storeToRefs(userStore)
 
-const goToUserProfile = () => {
-  router.push('/user-profile')
+const menu = ref()
+
+const handleLogout = async () => {
+  loading.start()
+  try {
+    const token = localStorage.getItem('token')
+    await logout(token)
+    userStore.resetStore()
+    router.push('/login')
+  } catch (error) {
+    console.error('登出失敗', error)
+  } finally {
+    loading.stop()
+  }
 }
+
+const confirm1 = () => {
+  confirm.require({
+    message: '請問您確定要登出嗎?',
+    header: '登出',
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: '確認'
+    },
+    accept: () => handleLogout()
+  })
+}
+
+const items = ref([
+  {
+    label: '',
+    items: [
+      {
+        label: '個人檔案',
+        icon: 'pi pi-id-card',
+        command: () => {
+          router.push('/user-profile')
+        }
+      },
+      {
+        label: '登出',
+        icon: 'pi pi-sign-out',
+        command: () => {
+          confirm1()
+        }
+      }
+    ]
+  }
+])
+
+const toggle = (event) => {
+  menu.value.toggle(event)
+}
+
+watch(userInfo, (newUserInfo) => {
+  if (newUserInfo) {
+    items.value[0].label = newUserInfo.name
+  }
+})
+
+onMounted(() => {
+  if (userInfo.value) {
+    items.value[0].label = userInfo.value.name
+  }
+})
 </script>
 
 <template>
@@ -54,7 +130,15 @@ const goToUserProfile = () => {
         <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
           <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
         </button>
-        <div class="relative">
+        <!-- <div class="relative">
+          <Button
+            type="button"
+            icon="pi pi-ellipsis-v"
+            @click="toggle"
+            aria-haspopup="true"
+            aria-controls="overlay_menu"
+          />
+          <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
           <button
             v-styleclass="{
               selector: '@next',
@@ -69,7 +153,7 @@ const goToUserProfile = () => {
           >
             <i class="pi pi-palette"></i>
           </button>
-        </div>
+        </div> -->
       </div>
 
       <button
@@ -96,10 +180,14 @@ const goToUserProfile = () => {
             <i class="pi pi-inbox"></i>
             <span>Messages</span>
           </button>
-          <button type="button" class="layout-topbar-action" @click="goToUserProfile">
-            <i class="pi pi-user"></i>
-            <span>Profile</span>
-          </button>
+          <Button
+            type="button"
+            icon="pi pi-user"
+            @click="toggle"
+            aria-haspopup="true"
+            aria-controls="overlay_menu"
+          />
+          <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
         </div>
       </div>
     </div>

@@ -5,4 +5,5 @@ import { RouterView } from 'vue-router'
 <template>
   <RouterView />
   <Toast />
+  <ConfirmDialog />
 </template>

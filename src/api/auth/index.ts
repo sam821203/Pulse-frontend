@@ -5,6 +5,9 @@ interface IUser {
   password: string
 }
 
+/**
+ * 使用者登入
+ */
 export const login = async (user: IUser) => {
   return service({
     method: 'POST',
@@ -13,6 +16,20 @@ export const login = async (user: IUser) => {
   })
 }
 
+/**
+ * 使用者登出
+ */
+export const logout = async (token: string) => {
+  return service({
+    method: 'POST',
+    url: '/auth/logout',
+    data: { token }
+  })
+}
+
+/**
+ * 使用者註冊
+ */
 export const register = async (user: IUser) => {
   return service({
     method: 'POST',

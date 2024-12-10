@@ -18,6 +18,12 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const resetStore = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('userInfo')
+    userInfo.value = null
+  }
+
   const setEvent = (eventName: any) => {
     event.value = eventName
   }
@@ -26,6 +32,7 @@ export const useUserStore = defineStore('user', () => {
     event,
     setEvent,
     getUserInfoData,
-    userInfo
+    userInfo,
+    resetStore
   }
 })
