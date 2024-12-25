@@ -14,6 +14,7 @@ const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout()
 const { userInfo } = storeToRefs(userStore)
 
 const menu = ref()
+const inputValue = ref('')
 
 const handleLogout = async () => {
   loading.start()
@@ -72,6 +73,10 @@ const toggle = (event) => {
   menu.value.toggle(event)
 }
 
+const handleSearchStock = () => {
+  router.push({ path: '/listedCompany/detail', query: { param: inputValue.value } })
+}
+
 watch(userInfo, (newUserInfo) => {
   if (newUserInfo) {
     items.value[0].label = newUserInfo.name
@@ -123,6 +128,17 @@ onMounted(() => {
         </svg>
         <span class="font-semibold">Pulse</span>
       </router-link>
+
+      <!-- TODO: 製作模糊搜尋，會跑出相關股票資訊 -->
+      <div class="search-bar flex">
+        <div class="search-bar__input mr-4">
+          <IconField>
+            <InputIcon class="pi pi-search" />
+            <InputText type="text" placeholder="Search" v-model="inputValue" />
+          </IconField>
+        </div>
+        <Button label="搜尋" icon="pi pi-search" @click.prevent.stop="handleSearchStock" />
+      </div>
     </div>
 
     <div class="layout-topbar-actions">
@@ -193,3 +209,17 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style lang="scss">
+.search-bar {
+  &__input {
+    width: 400px;
+  }
+  button {
+    min-width: 88px;
+  }
+  input {
+    width: 100%;
+  }
+}
+</style>

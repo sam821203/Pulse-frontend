@@ -1,4 +1,5 @@
 import { ListedCompanyRoute } from './modules/listedCompany'
+import { OverTheCounterRoute } from './modules/overTheCounter'
 import { UserRoute } from './modules/user'
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -18,6 +19,7 @@ const routes = [
         component: HomeView
       },
       ...ListedCompanyRoute,
+      ...OverTheCounterRoute,
       ...UserRoute
     ]
   },

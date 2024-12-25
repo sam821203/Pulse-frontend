@@ -15,7 +15,7 @@ defineProps({
 
 <template>
   <h2 class="header">
-    <i :class="iconType" style="font-size: 1.75rem; color: #708090"></i>
+    <i :class="['mt-1', iconType]" style="font-size: 1.75rem; color: #708090"></i>
     <span
       v-tooltip.top="{
         value: title,
@@ -35,7 +35,8 @@ defineProps({
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   font-size: 24px;
+  font-weight: 700;
 }
 </style>

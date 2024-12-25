@@ -44,9 +44,10 @@ export default defineConfig({
   server: {
     port: 8090,
     proxy: {
-      // '/api': {
-      //   target: 'http://localhost:3000',
-      //   changeOrigin: true
+      // '/pulse': {
+      //   target: 'http://localhost:3000'
+      //   changeOrigin: true,
+      //   rewrite: (path) => path.replace(/^\/api/, '')
       // },
       '/api/stock': {
         target: 'https://mis.twse.com.tw/stock/api',

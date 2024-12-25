@@ -17,9 +17,9 @@ const goListedCompany = async () => {
 <template>
   <main>
     <h2>Dashboard</h2>
-    <div class="card flex justify-center gap-4">
+    <!-- <div class="card flex justify-center gap-4">
       <Button label="取得 UserInfo" @click="handleGetUser" />
       <Button label="上市股票" @click="goListedCompany" />
-    </div>
+    </div> -->
   </main>
 </template>
