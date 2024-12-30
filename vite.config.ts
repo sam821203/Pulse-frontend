@@ -49,10 +49,10 @@ export default defineConfig({
       //   changeOrigin: true,
       //   rewrite: (path) => path.replace(/^\/api/, '')
       // },
-      '/api/stock': {
+      '/twse': {
         target: 'https://mis.twse.com.tw/stock/api',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/stock/, '')
+        rewrite: (path) => path.replace(/^\/twse/, '')
       }
     }
   }

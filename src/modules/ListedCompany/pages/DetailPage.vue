@@ -180,7 +180,7 @@ const stockDataAdapter = (data: any) => {
   }
 }
 
-const isNumeric = (n) => !isNaN(parseFloat(n)) && isFinite(n)
+const isNumeric = (n: string | number) => !isNaN(parseFloat(n.toString())) && isFinite(n as number)
 
 const fetchStockInfo = async (params: any) => {
   try {
@@ -197,21 +197,17 @@ const getStockDetail = async () => {
   try {
     if (!isNumeric(queryParam.value)) {
       const response = await fetchStockInfo({ name: queryParam.value })
-      queryParam.value = response[0].symbol
+      queryParam.value = response.symbol
     }
 
     const response = await fetchStockInfo({ symbol: queryParam.value })
-    const marketType = response[0].market
+    const marketType = response.market
     companyType.value = marketType === '上市' ? 'tse' : 'otc'
 
     const result = await getRealTimeStockInfo(companyType.value, queryParam.value)
-    // const result = await fetch(
-    //   `/api/stock/getStockInfo.jsp?ex_ch=${companyType.value}_${queryParam.value}.tw`
-    // )
-    console.log('result:', result)
-    // const data = await result.json()
-    // const adaptedData = stockDataAdapter(data.msgArray[0])
-    // Object.assign(stockData, adaptedData)
+    const data = await result.json()
+    const adaptedData = stockDataAdapter(data.msgArray[0])
+    Object.assign(stockData, adaptedData)
   } catch (err) {
     console.error(err)
   } finally {
