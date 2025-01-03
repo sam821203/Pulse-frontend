@@ -5,6 +5,8 @@ import { storeToRefs } from 'pinia'
 import { useConfirm } from 'primevue/useconfirm'
 import { logout } from '../api/auth/index'
 import loading from '@/utils/loading'
+import AutoComplete from 'primevue/autocomplete'
+import { getStockInfo } from '@/api/stock/index'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -77,6 +79,25 @@ const handleSearchStock = () => {
   router.push({ path: '/listedCompany/detail', query: { param: inputValue.value } })
 }
 
+const fetchStockInfo = async () => {
+  try {
+    const response = await getStockInfo()
+    return response
+  } catch (err) {
+    console.error(err)
+    throw err
+  }
+}
+
+const searchItems = ref([])
+const list = ['5371', '5322', '5392', '1901']
+
+const search = (event) => {
+  searchItems.value = list.filter((item) => item.includes(event.query))
+  // searchItems.value = [...Array(10).keys()].map((item) => event.query + '-' + item)
+  // console.log('searchItems', searchItems.value)
+}
+
 watch(userInfo, (newUserInfo) => {
   if (newUserInfo) {
     items.value[0].label = newUserInfo.name
@@ -87,10 +108,30 @@ onMounted(() => {
   if (userInfo.value) {
     items.value[0].label = userInfo.value.name
   }
+
+  fetchStockInfo()
 })
 </script>
 
 <template>
+  <input type="text" id="searchInput" placeholder="搜尋..." style="width: 100%; padding: 8px" />
+  <ul
+    id="suggestionList"
+    style="
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border: 1px solid #ccc;
+      border-top: none;
+      max-height: 150px;
+      overflow-y: auto;
+      position: absolute;
+      width: 100%;
+      display: none;
+      background-color: white;
+      z-index: 1000;
+    "
+  ></ul>
   <div class="layout-topbar">
     <div class="layout-topbar-logo-container">
       <button class="layout-menu-button layout-topbar-action" @click="onMenuToggle">
@@ -132,10 +173,17 @@ onMounted(() => {
       <!-- TODO: 製作模糊搜尋，會跑出相關股票資訊 -->
       <div class="search-bar flex">
         <div class="search-bar__input mr-4">
-          <IconField>
+          <!-- <IconField>
             <InputIcon class="pi pi-search" />
             <InputText type="text" placeholder="Search" v-model="inputValue" />
-          </IconField>
+          </IconField> -->
+          <AutoComplete
+            class="w-full"
+            v-model="inputValue"
+            placeholder="Search"
+            :suggestions="searchItems"
+            @complete="search"
+          />
         </div>
         <Button label="搜尋" icon="pi pi-search" @click.prevent.stop="handleSearchStock" />
       </div>
