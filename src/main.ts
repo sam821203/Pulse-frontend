@@ -16,6 +16,7 @@ import '@/assets/tailwind.css'
 import 'vue-loading-overlay/dist/css/index.css'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 const MyPreset = definePreset(Aura, {
   semantic: {
@@ -35,7 +36,7 @@ const MyPreset = definePreset(Aura, {
   }
 })
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 app.use(PrimeVue, {
   theme: {

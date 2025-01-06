@@ -3,13 +3,9 @@ import * as d3 from 'd3'
 import LineChart from '../components/LineChart.vue'
 import MainHeader from '@/components/MainHeader.vue'
 import loading from '@/utils/loading'
-import { getStockInfo, getRealTimeStockInfo } from '@/api/stock/index'
+import { getRealTimeStockInfo } from '@/api/stock/index'
 
 const route = useRoute()
-
-defineProps<{
-  msg: string
-}>()
 
 interface StockData {
   sellVolume: string
@@ -33,12 +29,13 @@ interface StockData {
   previousClose: string
 }
 
-const queryParam = ref<string>(route.query.param)
-
-const companyType = ref<'tse' | 'otc'>('')
 const stockNo = ref('2330')
 const chartData = ref([])
 const priceLower = ref(false)
+const currentStock = reactive({
+  market: route.query.market,
+  symbol: route.query.symbol
+})
 
 // 每日市場成交資訊
 // 'https://www.twse.com.tw/exchangeReport/FMTQIK?response=json&date=20220701'
@@ -180,32 +177,14 @@ const stockDataAdapter = (data: any) => {
   }
 }
 
-const isNumeric = (n: string | number) => !isNaN(parseFloat(n.toString())) && isFinite(n as number)
-
-const fetchStockInfo = async (params: any) => {
-  try {
-    const response = await getStockInfo(params)
-    return response
-  } catch (err) {
-    console.error(err)
-    throw err
-  }
-}
-
 const getStockDetail = async () => {
   loading.start()
   try {
-    if (!isNumeric(queryParam.value)) {
-      const response = await fetchStockInfo({ name: queryParam.value })
-      queryParam.value = response.symbol
-    }
-
-    const response = await fetchStockInfo({ symbol: queryParam.value })
-    const marketType = response.market
-    companyType.value = marketType === '上市' ? 'tse' : 'otc'
-
-    const result = await getRealTimeStockInfo(companyType.value, queryParam.value)
-    const data = await result.json()
+    const resp = await getRealTimeStockInfo(
+      currentStock.market as 'tse' | 'otc',
+      currentStock.symbol as string
+    )
+    const data = await resp.json()
     const adaptedData = stockDataAdapter(data.msgArray[0])
     Object.assign(stockData, adaptedData)
   } catch (err) {
@@ -231,26 +210,26 @@ const initFetchStockDataTime = async () => {
   let delay = 5000
   // 進頁面時請求一次
   // await nextTick()
-  getStockDetail()
+  // getStockDetail()
 
-  // let timerId = setTimeout(function request() {
-  //   const now = new Date()
-  //   const hours = now.getHours()
-  //   const minutes = now.getMinutes()
-  //   const day = now.getDay()
+  let timerId = setTimeout(function request() {
+    const now = new Date()
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+    const day = now.getDay()
 
-  //   if (day === 0 || day === 6) {
-  //     clearTimeout(timerId)
-  //     return
-  //   }
+    if (day === 0 || day === 6) {
+      clearTimeout(timerId)
+      return
+    }
 
-  //   if (hours >= 9 && (hours < 13 || (hours === 13 && minutes <= 30))) {
-  //     getStockDetail()
-  //     timerId = setTimeout(request, delay)
-  //   } else {
-  //     clearTimeout(timerId)
-  //   }
-  // }, delay)
+    if (hours >= 9 && (hours < 13 || (hours === 13 && minutes <= 30))) {
+      getStockDetail()
+      timerId = setTimeout(request, delay)
+    } else {
+      clearTimeout(timerId)
+    }
+  }, delay)
 }
 
 const stockTitle = computed(() => {
@@ -446,10 +425,9 @@ const calculatePriceChange = computed(() => {
 watch(
   route,
   async (newRoute) => {
-    queryParam.value = newRoute.query.param
-    // loading.start()
+    currentStock.market = newRoute.query.market
+    currentStock.symbol = newRoute.query.symbol
     await getStockDetail()
-    // loading.stop()
   },
   { immediate: true }
 )
@@ -468,11 +446,8 @@ onBeforeRouteUpdate(async (to, from) => {
 })
 
 onMounted(() => {
-  // loading.start()
-  // initFetchStockDataTime()
+  initFetchStockDataTime()
   // getCategory()
-  // // getData()
-  // loading.stop()
 })
 </script>
 

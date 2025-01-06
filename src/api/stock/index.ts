@@ -18,7 +18,7 @@ interface StockInfo {
 //   })
 // }
 
-export function getStockInfo(queryParams: StockInfo): Promise<StockInfo> {
+export function getStockInfo(queryParams?: StockInfo): Promise<StockInfo> {
   return service({
     method: 'GET',
     url: '/stock',

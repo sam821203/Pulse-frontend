@@ -1,22 +1,29 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout'
 import { useUserStore } from '@/stores'
+import { useStockStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useConfirm } from 'primevue/useconfirm'
 import { logout } from '../api/auth/index'
 import loading from '@/utils/loading'
 import AutoComplete from 'primevue/autocomplete'
 import { getStockInfo } from '@/api/stock/index'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const userStore = useUserStore()
+const stockStore = useStockStore()
 const confirm = useConfirm()
+const toast = useToast()
 
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout()
 const { userInfo } = storeToRefs(userStore)
+const { allStocksData } = storeToRefs(stockStore)
 
 const menu = ref()
 const inputValue = ref('')
+const allStocks = ref([])
+const marketType = ref('')
 
 const handleLogout = async () => {
   loading.start()
@@ -75,13 +82,9 @@ const toggle = (event) => {
   menu.value.toggle(event)
 }
 
-const handleSearchStock = () => {
-  router.push({ path: '/listedCompany/detail', query: { param: inputValue.value } })
-}
-
-const fetchStockInfo = async () => {
+const fetchStockInfo = async (params) => {
   try {
-    const response = await getStockInfo()
+    const response = await getStockInfo(params)
     return response
   } catch (err) {
     console.error(err)
@@ -89,13 +92,46 @@ const fetchStockInfo = async () => {
   }
 }
 
-const searchItems = ref([])
-const list = ['5371', '5322', '5392', '1901']
+const handleSearchStock = async () => {
+  const match = inputValue.value.match(/\d+/)
+  if (!match) return
+  const stockSymbol = match[0]
+  try {
+    const resp = await fetchStockInfo({ symbol: stockSymbol })
+    if (resp.status === 400) {
+      toast.add({
+        severity: 'error',
+        summary: resp.message,
+        life: 3000
+      })
+    } else {
+      marketType.value = resp.market === '上市' ? 'tse' : 'otc'
+      router.push({
+        path: '/listedCompany/detail',
+        query: { symbol: stockSymbol, market: marketType.value }
+      })
+    }
+  } catch (err) {
+    console.log('err', err)
+  }
+}
 
-const search = (event) => {
-  searchItems.value = list.filter((item) => item.includes(event.query))
-  // searchItems.value = [...Array(10).keys()].map((item) => event.query + '-' + item)
-  // console.log('searchItems', searchItems.value)
+const listAdapter = async () => {
+  allStocks.value = allStocksData.value.map((stock) => `${stock.symbol} ${stock.name}`)
+}
+
+const searchItems = ref([])
+
+const search = ({ query }) => {
+  searchItems.value = allStocks.value.filter((item) => {
+    let regex
+    if (/[\u4e00-\u9fa5]/.test(query)) {
+      regex = new RegExp(`${query}`, 'i')
+    } else {
+      regex = new RegExp(`^${query}`, 'i')
+    }
+    return regex.test(item)
+  })
 }
 
 watch(userInfo, (newUserInfo) => {
@@ -104,12 +140,13 @@ watch(userInfo, (newUserInfo) => {
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (userInfo.value) {
     items.value[0].label = userInfo.value.name
   }
 
-  fetchStockInfo()
+  await stockStore.getAllStocksData()
+  await listAdapter()
 })
 </script>
 
@@ -183,6 +220,7 @@ onMounted(() => {
             placeholder="Search"
             :suggestions="searchItems"
             @complete="search"
+            @item-select="handleSearchStock"
           />
         </div>
         <Button label="搜尋" icon="pi pi-search" @click.prevent.stop="handleSearchStock" />
