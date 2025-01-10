@@ -3,7 +3,11 @@ import * as d3 from 'd3'
 import LineChart from '../components/LineChart.vue'
 import MainHeader from '@/components/MainHeader.vue'
 import loading from '@/utils/loading'
-import { getRealTimeStockInfo } from '@/api/stock/index'
+import {
+  getRealTimeStockInfo,
+  getCategoryInfo,
+  getEquitiesValuesFromTickers
+} from '@/api/stock/index'
 
 const route = useRoute()
 
@@ -34,7 +38,8 @@ const chartData = ref([])
 const priceLower = ref(false)
 const currentStock = reactive({
   market: route.query.market,
-  symbol: route.query.symbol
+  symbol: route.query.symbol,
+  industry: route.query.industry
 })
 
 // 每日市場成交資訊
@@ -167,7 +172,7 @@ const stockDataAdapter = (data: any) => {
     lowestPrice: formatNumber(data.l),
     highestPrice: formatNumber(data.h),
     downLimitPrice: formatNumber(data.w),
-    accumulatedVolume: formatNumber(data.v),
+    accumulatedVolume: data.v,
     upLimitPrice: formatNumber(data.u),
     lastTradeTime: data.t,
     currentVolume: formatNumber(data.tv),
@@ -177,41 +182,39 @@ const stockDataAdapter = (data: any) => {
   }
 }
 
-const getStockDetail = async () => {
-  loading.start()
+const getStockRealTime = async () => {
   try {
     const resp = await getRealTimeStockInfo(
       currentStock.market as 'tse' | 'otc',
       currentStock.symbol as string
     )
-    const data = await resp.json()
-    const adaptedData = stockDataAdapter(data.msgArray[0])
-    Object.assign(stockData, adaptedData)
+    const data = stockDataAdapter(resp.msgArray[0])
+    Object.assign(stockData, data)
+
+    // 取得本益比
+    fetchEquitiesValues()
   } catch (err) {
+    // TODO: 統一處理錯誤
     console.error(err)
-  } finally {
-    loading.stop()
   }
 }
 
 const getCategory = async () => {
   // const category = stockData.marketType === 'tse' ? '上市' : '上櫃'
-  // https://mis.twse.com.tw/stock/api/getCategory.jsp?ex=tse&i=24
+  // https://mis.twse.com.tw/stock/api/getCategory.jsp?ex=tse&i=02
   try {
-    const response = await fetch(`/api/stock/getCategory.jsp?ex=tse&i=02`)
-    const data = await response.json()
-    console.log('category:', data)
+    // 24：半導體
+    const resp = await getCategoryInfo('tse', '24')
+    if (resp.rtcode === '0000') {
+      console.log('category:', resp)
+    }
   } catch (err) {
     console.error(err)
   }
 }
 
-const initFetchStockDataTime = async () => {
+const initStockTimer = async () => {
   let delay = 5000
-  // 進頁面時請求一次
-  // await nextTick()
-  // getStockDetail()
-
   let timerId = setTimeout(function request() {
     const now = new Date()
     const hours = now.getHours()
@@ -224,17 +227,13 @@ const initFetchStockDataTime = async () => {
     }
 
     if (hours >= 9 && (hours < 13 || (hours === 13 && minutes <= 30))) {
-      getStockDetail()
+      getStockRealTime()
       timerId = setTimeout(request, delay)
     } else {
       clearTimeout(timerId)
     }
   }, delay)
 }
-
-const stockTitle = computed(() => {
-  return stockData.companyShortName + ' (' + stockData.stockCode + ')'
-})
 
 const drawChart = () => {
   // 刪除原本的svg.charts，重新渲染改變寬度的svg
@@ -422,14 +421,39 @@ const calculatePriceChange = computed(() => {
   return changePercentage.toFixed(2)
 })
 
+interface EquitiesData {
+  peRatio: string
+}
+
+const equitiesData = ref<EquitiesData>({ peRatio: '' })
+
+// 取得本益比
+const fetchEquitiesValues = async () => {
+  try {
+    const resp = await getEquitiesValuesFromTickers({
+      symbol: stockData.stockCode,
+      name: stockData.companyShortName,
+      date: '2025-01-10'
+    })
+
+    equitiesData.value.peRatio = resp.peRatio?.toString() || ''
+    console.log('equitiesData:', equitiesData.value)
+  } catch (err) {
+    // TODO: 統一處理錯誤
+    console.error(err)
+  }
+}
+
 watch(
   route,
   async (newRoute) => {
+    // Object.assign(newRoute.query, currentStock)
     currentStock.market = newRoute.query.market
     currentStock.symbol = newRoute.query.symbol
-    await getStockDetail()
-  },
-  { immediate: true }
+    currentStock.industry = newRoute.query.industry
+    await getStockRealTime()
+  }
+  // { immediate: true }
 )
 
 // query 放在這裡會過早，導致娶不到 route query
@@ -441,25 +465,40 @@ onBeforeRouteUpdate(async (to, from) => {
   // console.log('onBeforeRouteUpdate: ', route.query.stockId)
   // loading.start()
   // console.log('onBeforeRouteUpdate')
-  // initFetchStockDataTime()
+  // initStockTimer()
   // loading.stop()
 })
 
-onMounted(() => {
-  initFetchStockDataTime()
-  // getCategory()
+onBeforeMount(() => {
+  loading.start()
+  getStockRealTime()
+  loading.stop()
+  initStockTimer()
+  getCategory()
 })
 </script>
 
 <template>
   <div class="card">
-    <MainHeader :title="stockTitle" iconType="pi pi-address-book" />
+    <div class="flex items-center">
+      <MainHeader :title="stockData.companyShortName" />
+      <span class="text-xl text-gray-500">{{ stockData.stockCode }}</span>
+    </div>
     <div :class="['price', 'flex', 'items-center', 'mb-4', { 'price--green': priceLower }]">
       <span class="price__current">{{ stockData.sellPrice }}</span>
       <span class="ml-6 price__percentage">{{ calculatePriceChange }}%</span>
     </div>
-    <!-- TODO: 分類股群 -->
-    <Tag style="font-weight: 500" severity="info" value="電子上游-IC-代工"></Tag>
+    <div class="flex items-center">
+      <Tag
+        class="mr-4"
+        style="font-weight: 500"
+        severity="help"
+        :value="currentStock.industry"
+      ></Tag>
+      <span class="mr-2">成交張數 {{ stockData.accumulatedVolume }}</span>
+      <span>本益比 {{ equitiesData.peRatio }}</span>
+      <span>實收資本額 {{}}</span>
+    </div>
   </div>
   <Tabs value="0">
     <TabList>
@@ -511,6 +550,7 @@ h3 {
 }
 
 .price {
+  height: 2.75rem;
   font-size: 1.5rem;
   font-weight: 700;
   color: #eb3d4d;

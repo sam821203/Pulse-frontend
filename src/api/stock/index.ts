@@ -8,15 +8,20 @@ interface StockInfo {
   name: string
   symbol: string
   updatedAt: string
+  dividendYear?: number
+  dividendYield?: number
+  fiscalYearQuarter?: string
+  pbRatio?: number
+  peRatio?: number
 }
 
-// export function getStockInfoFromTickers(queryParams: QueryParams) {
-//   return service({
-//     method: 'GET',
-//     url: '/ticker',
-//     params: queryParams
-//   })
-// }
+export function getEquitiesValuesFromTickers(queryParams: any): Promise<StockInfo> {
+  return service({
+    method: 'GET',
+    url: '/ticker',
+    params: queryParams
+  })
+}
 
 export function getStockInfo(queryParams?: StockInfo): Promise<StockInfo> {
   return service({
@@ -27,5 +32,11 @@ export function getStockInfo(queryParams?: StockInfo): Promise<StockInfo> {
 }
 
 export async function getRealTimeStockInfo(type: 'tse' | 'otc', code: string) {
-  return await fetch(`/twse/getStockInfo.jsp?ex_ch=${type}_${code}.tw`)
+  const resp = await fetch(`/twse/getStockInfo.jsp?ex_ch=${type}_${code}.tw`)
+  return resp.json()
+}
+
+export async function getCategoryInfo(type: 'tse' | 'otc', code?: string) {
+  const resp = await fetch(`/twse/getCategory.jsp?ex=${type}&i=${code}`)
+  return resp.json()
 }

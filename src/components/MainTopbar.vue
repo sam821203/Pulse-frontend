@@ -84,8 +84,16 @@ const toggle = (event) => {
 
 const fetchStockInfo = async (params) => {
   try {
-    const response = await getStockInfo(params)
-    return response
+    const resp = await getStockInfo(params)
+    if (resp.code === 2) {
+      toast.add({
+        severity: 'error',
+        summary: resp.msg,
+        life: 3000
+      })
+    } else {
+      return resp
+    }
   } catch (err) {
     console.error(err)
     throw err
@@ -93,24 +101,18 @@ const fetchStockInfo = async (params) => {
 }
 
 const handleSearchStock = async () => {
+  if (!inputValue.value) return
   const match = inputValue.value.match(/\d+/)
-  if (!match) return
-  const stockSymbol = match[0]
+  const stockSymbol = match ? match[0] : ''
+  const params = match ? { symbol: stockSymbol } : { name: inputValue.value }
   try {
-    const resp = await fetchStockInfo({ symbol: stockSymbol })
-    if (resp.status === 400) {
-      toast.add({
-        severity: 'error',
-        summary: resp.message,
-        life: 3000
-      })
-    } else {
-      marketType.value = resp.market === '上市' ? 'tse' : 'otc'
-      router.push({
-        path: '/listedCompany/detail',
-        query: { symbol: stockSymbol, market: marketType.value }
-      })
-    }
+    const resp = await fetchStockInfo(params)
+    const { market, symbol, industry } = resp
+    marketType.value = market === '上市' ? 'tse' : 'otc'
+    router.push({
+      path: '/listedCompany/detail',
+      query: { symbol, industry, market: marketType.value }
+    })
   } catch (err) {
     console.log('err', err)
   }
