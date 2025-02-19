@@ -1,4 +1,9 @@
-export interface UserData {
+export interface StockData {
+  _id: string
+  symbol: string
   name: string
-  roles: string
+  market: string
+  industry: string
+  createdAt: string
+  updatedAt: string
 }

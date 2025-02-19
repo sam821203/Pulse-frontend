@@ -1,19 +1,29 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout'
 import { useUserStore } from '@/stores'
+import { useStockStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useConfirm } from 'primevue/useconfirm'
 import { logout } from '../api/auth/index'
 import loading from '@/utils/loading'
+import AutoComplete from 'primevue/autocomplete'
+import { getStockInfo } from '@/api/stock/index'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const userStore = useUserStore()
+const stockStore = useStockStore()
 const confirm = useConfirm()
+const toast = useToast()
 
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout()
 const { userInfo } = storeToRefs(userStore)
+const { allStocksData } = storeToRefs(stockStore)
 
 const menu = ref()
+const inputValue = ref('')
+const allStocks = ref([])
+const marketType = ref('')
 
 const handleLogout = async () => {
   loading.start()
@@ -72,20 +82,95 @@ const toggle = (event) => {
   menu.value.toggle(event)
 }
 
+const fetchStockInfo = async (params) => {
+  try {
+    const resp = await getStockInfo(params)
+    if (resp.code === 2) {
+      toast.add({
+        severity: 'error',
+        summary: resp.msg,
+        life: 3000
+      })
+    } else {
+      return resp.data
+    }
+  } catch (err) {
+    console.error(err)
+    throw err
+  }
+}
+
+const handleSearchStock = async () => {
+  if (!inputValue.value) return
+  const match = inputValue.value.match(/\d+/)
+  const stockSymbol = match ? match[0] : ''
+  const params = match ? { symbol: stockSymbol } : { name: inputValue.value }
+  try {
+    const resp = await fetchStockInfo(params)
+    const { market, symbol, industry } = resp
+    marketType.value = market === '上市' ? 'tse' : 'otc'
+    router.push({
+      path: '/listedCompany/detail',
+      query: { symbol, industry, market: marketType.value }
+    })
+  } catch (err) {
+    console.log('err', err)
+  }
+}
+
+const listAdapter = async () => {
+  allStocks.value = allStocksData.value.map((stock) => `${stock.symbol} ${stock.name}`)
+}
+
+const searchItems = ref([])
+
+const search = ({ query }) => {
+  searchItems.value = allStocks.value.filter((item) => {
+    let regex
+    if (/[\u4e00-\u9fa5]/.test(query)) {
+      regex = new RegExp(`${query}`, 'i')
+    } else {
+      regex = new RegExp(`^${query}`, 'i')
+    }
+    return regex.test(item)
+  })
+}
+
 watch(userInfo, (newUserInfo) => {
   if (newUserInfo) {
     items.value[0].label = newUserInfo.name
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (userInfo.value) {
     items.value[0].label = userInfo.value.name
   }
+
+  await stockStore.getAllStocksData()
+  await listAdapter()
 })
 </script>
 
 <template>
+  <input type="text" id="searchInput" placeholder="搜尋..." style="width: 100%; padding: 8px" />
+  <ul
+    id="suggestionList"
+    style="
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border: 1px solid #ccc;
+      border-top: none;
+      max-height: 150px;
+      overflow-y: auto;
+      position: absolute;
+      width: 100%;
+      display: none;
+      background-color: white;
+      z-index: 1000;
+    "
+  ></ul>
   <div class="layout-topbar">
     <div class="layout-topbar-logo-container">
       <button class="layout-menu-button layout-topbar-action" @click="onMenuToggle">
@@ -123,6 +208,20 @@ onMounted(() => {
         </svg>
         <span class="font-semibold">Pulse</span>
       </router-link>
+
+      <div class="search-bar flex">
+        <div class="search-bar__input mr-4">
+          <AutoComplete
+            class="w-full"
+            v-model="inputValue"
+            placeholder="Search"
+            :suggestions="searchItems"
+            @complete="search"
+            @item-select="handleSearchStock"
+          />
+        </div>
+        <Button label="搜尋" icon="pi pi-search" @click.prevent.stop="handleSearchStock" />
+      </div>
     </div>
 
     <div class="layout-topbar-actions">
@@ -130,30 +229,6 @@ onMounted(() => {
         <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
           <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
         </button>
-        <!-- <div class="relative">
-          <Button
-            type="button"
-            icon="pi pi-ellipsis-v"
-            @click="toggle"
-            aria-haspopup="true"
-            aria-controls="overlay_menu"
-          />
-          <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
-          <button
-            v-styleclass="{
-              selector: '@next',
-              enterFromClass: 'hidden',
-              enterActiveClass: 'animate-scalein',
-              leaveToClass: 'hidden',
-              leaveActiveClass: 'animate-fadeout',
-              hideOnOutsideClick: true
-            }"
-            type="button"
-            class="layout-topbar-action layout-topbar-action-highlight"
-          >
-            <i class="pi pi-palette"></i>
-          </button>
-        </div> -->
       </div>
 
       <button
@@ -193,3 +268,17 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style lang="scss">
+.search-bar {
+  &__input {
+    width: 400px;
+  }
+  button {
+    min-width: 88px;
+  }
+  input {
+    width: 100%;
+  }
+}
+</style>

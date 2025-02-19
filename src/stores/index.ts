@@ -8,4 +8,5 @@ export function setupStore(app: { use: (arg0: Pinia) => void }) {
 
 export * from './modules/toast'
 export * from './modules/user'
+export * from './modules/stock'
 export { store }

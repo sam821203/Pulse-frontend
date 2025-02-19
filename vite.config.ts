@@ -44,14 +44,25 @@ export default defineConfig({
   server: {
     port: 8090,
     proxy: {
-      // '/api': {
-      //   target: 'http://localhost:3000',
-      //   changeOrigin: true
+      // '/pulse': {
+      //   target: 'http://localhost:3000'
+      //   changeOrigin: true,
+      //   rewrite: (path) => path.replace(/^\/api/, '')
       // },
-      '/api/stock': {
+      '/twse': {
         target: 'https://mis.twse.com.tw/stock/api',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/stock/, '')
+        rewrite: (path) => path.replace(/^\/twse/, '')
+      },
+      '/twse/openapi': {
+        target: 'https://openapi.twse.com.tw/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/twse\/openapi/, '')
+      },
+      '/tpex/openapi': {
+        target: 'https://www.tpex.org.tw/openapi/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/tpex\/openapi/, '')
       }
     }
   }

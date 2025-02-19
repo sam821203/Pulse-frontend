@@ -5,6 +5,6 @@ export const UserRoute = [
     path: '/user-profile',
     name: 'userProfile',
     component: USER_PROFILE,
-    meta: { title: '個人檔案' }
+    meta: { title: '個人檔案', hidden: true, permission: 'userProfile:view' }
   }
 ]

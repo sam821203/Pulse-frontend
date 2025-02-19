@@ -10,12 +10,14 @@ import { definePreset } from '@primevue/themes'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
 import { LoadingPlugin } from 'vue-loading-overlay'
+import vAmountFormat from '@/directives/formatAmount'
 
 import '@/assets/styles.scss'
 import '@/assets/tailwind.css'
 import 'vue-loading-overlay/dist/css/index.css'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 const MyPreset = definePreset(Aura, {
   semantic: {
@@ -35,7 +37,7 @@ const MyPreset = definePreset(Aura, {
   }
 })
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 app.use(PrimeVue, {
   theme: {
@@ -54,5 +56,7 @@ app.use(
   // },
   // { before: '載入中...' }
 )
+
+app.directive('amount-format', vAmountFormat)
 
 app.mount('#app')

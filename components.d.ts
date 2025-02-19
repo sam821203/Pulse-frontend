@@ -10,12 +10,15 @@ declare module 'vue' {
     AlterForm: typeof import('./src/components/login/AlterForm.vue')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
+    ConfirmDialog: typeof import('primevue/confirmdialog')['default']
     Form: typeof import('@primevue/forms/form')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
     IconDocumentation: typeof import('./src/components/icons/IconDocumentation.vue')['default']
     IconEcosystem: typeof import('./src/components/icons/IconEcosystem.vue')['default']
+    IconField: typeof import('primevue/iconfield')['default']
     IconSupport: typeof import('./src/components/icons/IconSupport.vue')['default']
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
+    InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
     LoginForm: typeof import('./src/components/login/LoginForm.vue')['default']
     MainFooter: typeof import('./src/components/MainFooter.vue')['default']
@@ -23,6 +26,7 @@ declare module 'vue' {
     MainMenu: typeof import('./src/components/MainMenu.vue')['default']
     MainMenuItem: typeof import('./src/components/MainMenuItem.vue')['default']
     MainTopbar: typeof import('./src/components/MainTopbar.vue')['default']
+    Menu: typeof import('primevue/menu')['default']
     Message: typeof import('primevue/message')['default']
     Password: typeof import('primevue/password')['default']
     RegisterForm: typeof import('./src/components/login/RegisterForm.vue')['default']
@@ -33,9 +37,11 @@ declare module 'vue' {
     TabPanel: typeof import('primevue/tabpanel')['default']
     TabPanels: typeof import('primevue/tabpanels')['default']
     Tabs: typeof import('primevue/tabs')['default']
+    Tag: typeof import('primevue/tag')['default']
     Toast: typeof import('primevue/toast')['default']
   }
   export interface ComponentCustomProperties {
     StyleClass: typeof import('primevue/styleclass')['default']
+    Tooltip: typeof import('primevue/tooltip')['default']
   }
 }
