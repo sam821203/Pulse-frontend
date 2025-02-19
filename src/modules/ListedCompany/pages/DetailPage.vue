@@ -6,32 +6,13 @@ import loading from '@/utils/loading'
 import {
   getRealTimeStockInfo,
   getCategoryInfo,
-  getEquitiesValuesFromTickers
+  getEquitiesValuesFromTickers,
+  getListedCompanyOpenData,
+  getOTCOpenData
 } from '@/api/stock/index'
+import type { StockData, ListedCompanyData, OTCCompanyData } from '../model/interface'
 
 const route = useRoute()
-
-interface StockData {
-  sellVolume: string
-  marketType: string
-  buyVolume: string
-  lastTradeDate: string
-  buyPrice: string
-  stockCode: string
-  sellPrice: string
-  companyShortName: string
-  openingPrice: string
-  lowestPrice: string
-  highestPrice: string
-  downLimitPrice: string
-  accumulatedVolume: string
-  upLimitPrice: string
-  lastTradeTime: string
-  currentVolume: string
-  companyName: string
-  currentPrice: string
-  previousClose: string
-}
 
 const stockNo = ref('2330')
 const chartData = ref([])
@@ -127,19 +108,17 @@ const stockData = reactive<StockData>({
   currentVolume: '', // 當盤成交量
   companyName: '', // 公司全名
   currentPrice: '', // 當盤成交價
-  previousClose: '' // 昨收
+  previousClose: '', // 昨收
+  issueShares: '' // 實收資本額
 })
 
 // 中文標籤與對應字段
 const fieldLabels: Record<keyof StockData, string> = {
   sellVolume: '揭示賣量',
-  marketType: '上市別',
   buyVolume: '揭示買量',
   lastTradeDate: '最近交易日期',
   buyPrice: '揭示買價',
-  stockCode: '股票代號',
   sellPrice: '揭示賣價',
-  companyShortName: '公司簡稱',
   openingPrice: '開盤價',
   lowestPrice: '最低價',
   highestPrice: '最高價',
@@ -206,10 +185,30 @@ const getCategory = async () => {
     // 24：半導體
     const resp = await getCategoryInfo('tse', '24')
     if (resp.rtcode === '0000') {
-      console.log('category:', resp)
+      // console.log('category:', resp)
     }
   } catch (err) {
     console.error(err)
+  }
+}
+
+const getCompanyOpenData = async () => {
+  try {
+    if (currentStock.market === 'tse') {
+      const resp: ListedCompanyData[] = await getListedCompanyOpenData()
+      const stockInfo = resp.find((stock) => stock['公司代號'] === currentStock.symbol)
+      if (stockInfo) {
+        stockData.issueShares = stockInfo['實收資本額']
+      }
+    } else {
+      const resp: OTCCompanyData[] = await getOTCOpenData()
+      const stockInfo = resp.find((stock) => stock.SecuritiesCompanyCode === currentStock.symbol)
+      if (stockInfo) {
+        stockData.issueShares = stockInfo.IssueShares
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching company open data:', err)
   }
 }
 
@@ -437,7 +436,7 @@ const fetchEquitiesValues = async () => {
     })
 
     equitiesData.value.peRatio = resp.peRatio?.toString() || ''
-    console.log('equitiesData:', equitiesData.value)
+    // console.log('equitiesData:', equitiesData.value)
   } catch (err) {
     // TODO: 統一處理錯誤
     console.error(err)
@@ -452,6 +451,7 @@ watch(
     currentStock.symbol = newRoute.query.symbol
     currentStock.industry = newRoute.query.industry
     await getStockRealTime()
+    await getCompanyOpenData()
   }
   // { immediate: true }
 )
@@ -472,9 +472,10 @@ onBeforeRouteUpdate(async (to, from) => {
 onBeforeMount(() => {
   loading.start()
   getStockRealTime()
-  loading.stop()
   initStockTimer()
   getCategory()
+  getCompanyOpenData()
+  loading.stop()
 })
 </script>
 
@@ -497,7 +498,10 @@ onBeforeMount(() => {
       ></Tag>
       <span class="mr-2">成交張數 {{ stockData.accumulatedVolume }}</span>
       <span>本益比 {{ equitiesData.peRatio }}</span>
-      <span>實收資本額 {{}}</span>
+      <div>
+        <span>實收資本額</span>
+        <span v-amount-format="stockData.issueShares"></span>
+      </div>
     </div>
   </div>
   <Tabs value="0">

@@ -40,3 +40,19 @@ export async function getCategoryInfo(type: 'tse' | 'otc', code?: string) {
   const resp = await fetch(`/twse/getCategory.jsp?ex=${type}&i=${code}`)
   return resp.json()
 }
+
+/**
+ * 上市股票基本資料
+ */
+export async function getListedCompanyOpenData() {
+  const resp = await fetch(`/twse/openapi/opendata/t187ap03_L`)
+  return resp.json()
+}
+
+/**
+ * 上櫃股票基本資料
+ */
+export async function getOTCOpenData() {
+  const resp = await fetch(`/tpex/openapi/mopsfin_t187ap03_O`)
+  return resp.json()
+}

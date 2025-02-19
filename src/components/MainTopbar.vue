@@ -92,7 +92,7 @@ const fetchStockInfo = async (params) => {
         life: 3000
       })
     } else {
-      return resp
+      return resp.data
     }
   } catch (err) {
     console.error(err)
@@ -209,13 +209,8 @@ onMounted(async () => {
         <span class="font-semibold">Pulse</span>
       </router-link>
 
-      <!-- TODO: 製作模糊搜尋，會跑出相關股票資訊 -->
       <div class="search-bar flex">
         <div class="search-bar__input mr-4">
-          <!-- <IconField>
-            <InputIcon class="pi pi-search" />
-            <InputText type="text" placeholder="Search" v-model="inputValue" />
-          </IconField> -->
           <AutoComplete
             class="w-full"
             v-model="inputValue"
@@ -234,30 +229,6 @@ onMounted(async () => {
         <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
           <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
         </button>
-        <!-- <div class="relative">
-          <Button
-            type="button"
-            icon="pi pi-ellipsis-v"
-            @click="toggle"
-            aria-haspopup="true"
-            aria-controls="overlay_menu"
-          />
-          <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
-          <button
-            v-styleclass="{
-              selector: '@next',
-              enterFromClass: 'hidden',
-              enterActiveClass: 'animate-scalein',
-              leaveToClass: 'hidden',
-              leaveActiveClass: 'animate-fadeout',
-              hideOnOutsideClick: true
-            }"
-            type="button"
-            class="layout-topbar-action layout-topbar-action-highlight"
-          >
-            <i class="pi pi-palette"></i>
-          </button>
-        </div> -->
       </div>
 
       <button

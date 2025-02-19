@@ -10,6 +10,7 @@ import { definePreset } from '@primevue/themes'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
 import { LoadingPlugin } from 'vue-loading-overlay'
+import vAmountFormat from '@/directives/formatAmount'
 
 import '@/assets/styles.scss'
 import '@/assets/tailwind.css'
@@ -55,5 +56,7 @@ app.use(
   // },
   // { before: '載入中...' }
 )
+
+app.directive('amount-format', vAmountFormat)
 
 app.mount('#app')
