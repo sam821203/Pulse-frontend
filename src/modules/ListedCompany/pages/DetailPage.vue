@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import * as d3 from 'd3'
-import LineChart from '../components/LineChart.vue'
 import MainHeader from '@/components/MainHeader.vue'
 import loading from '@/utils/loading'
 import {
@@ -8,9 +6,14 @@ import {
   getCategoryInfo,
   getEquitiesValuesFromTickers,
   getListedCompanyOpenData,
-  getOTCOpenData
+  getOTCOpenData,
+  getTest
 } from '@/api/stock/index'
 import type { StockData, ListedCompanyData, OTCCompanyData } from '../model/interface'
+// import CandlestickChart from '../components/C  andlestickChart.vue'
+import CrosshairChart from '../components/CrosshairChart.vue'
+// import StockChart from '../components/StockChart.vue'
+import type { ChartData } from '../model/interface'
 
 const route = useRoute()
 
@@ -64,6 +67,7 @@ const getStockData = () => {
     // 只取今日資料
     if (data[i][0] == todayTwFormat) {
       closePrice = removeComma(data[i][6]) // 收盤指數 數字格式化
+
       variation = removeComma(data[i][7]) // 漲跌點數 數字格式化
       volume = removeComma(data[i][2]) // 成交量 數字格式化
 
@@ -73,15 +77,6 @@ const getStockData = () => {
       dailyRow = [todayEmailFormat, closePrice, variation, volume]
     }
   }
-
-  // // 如果有今日資料
-  // if (dailyRow.length) {
-  //   // 工作表增加一列資料
-  //   index_sheet.appendRow(dailyRow)
-
-  //   // 寄信通知
-  //   sendMailStock(dailyRow)
-  // }
 
   // 數字格式化
   function removeComma(number: any) {
@@ -113,19 +108,19 @@ const stockData = reactive<StockData>({
 })
 
 // 中文標籤與對應字段
-const fieldLabels: Record<keyof StockData, string> = {
+const fieldLabels: Partial<Record<keyof StockData, string>> = {
   sellVolume: '揭示賣量',
+  marketType: '上市別',
   buyVolume: '揭示買量',
   lastTradeDate: '最近交易日期',
   buyPrice: '揭示買價',
+  stockCode: '股票代號',
   sellPrice: '揭示賣價',
   openingPrice: '開盤價',
   lowestPrice: '最低價',
   highestPrice: '最高價',
   downLimitPrice: '跌停價',
-  accumulatedVolume: '累積成交量',
   upLimitPrice: '漲停價',
-  lastTradeTime: '最近成交時刻',
   currentVolume: '當盤成交量',
   companyName: '公司全名',
   currentPrice: '當盤成交價',
@@ -137,12 +132,32 @@ const formatNumber = (value: string) => {
   return isNaN(number) ? value : number.toFixed(2)
 }
 
+const formatDate = (dateString: string): string => {
+  if (dateString.length !== 8) {
+    throw new Error('Invalid date format')
+  }
+  const year = dateString.substring(0, 4)
+  const month = dateString.substring(4, 6)
+  const day = dateString.substring(6, 8)
+  return `${year}/${month}/${day}`
+}
+
+// 定義一個函數來格式化時間
+const formatTime = (timeString: string): string => {
+  if (timeString.length !== 8) {
+    throw new Error('Invalid time format')
+  }
+  const hours = timeString.substring(0, 2)
+  const minutes = timeString.substring(3, 5)
+  return `${hours}:${minutes}`
+}
+
 const stockDataAdapter = (data: any) => {
   return {
     sellVolume: formatNumber(data.f),
     marketType: data.ex,
     buyVolume: formatNumber(data.g),
-    lastTradeDate: data.d,
+    lastTradeDate: formatDate(data.d),
     buyPrice: formatNumber(data.b),
     stockCode: data.c,
     sellPrice: formatNumber(data.a),
@@ -153,8 +168,8 @@ const stockDataAdapter = (data: any) => {
     downLimitPrice: formatNumber(data.w),
     accumulatedVolume: data.v,
     upLimitPrice: formatNumber(data.u),
-    lastTradeTime: data.t,
-    currentVolume: formatNumber(data.tv),
+    lastTradeTime: formatTime(data.t),
+    currentVolume: data.tv,
     companyName: data.nf,
     currentPrice: formatNumber(data.z),
     previousClose: formatNumber(data.y)
@@ -234,177 +249,6 @@ const initStockTimer = async () => {
   }, delay)
 }
 
-const drawChart = () => {
-  // 刪除原本的svg.charts，重新渲染改變寬度的svg
-  d3.select('.chart svg').remove()
-
-  // RWD 的 svg 寬高
-  const rwdSvgWidth = parseInt(d3.select('.chart').style('width'))
-  const rwdSvgHeight = rwdSvgWidth * 0.5
-  const margin = 40
-  const bandWidth = 20
-  const svg = d3
-    .select('.chart')
-    .append('svg')
-    .attr('width', rwdSvgWidth)
-    .attr('height', rwdSvgHeight)
-
-  // map 資料集
-  // 取週數
-  const xData = chartData.value.map((i: { [key: string]: string }) =>
-    parseInt(i['發病年週'].substring(4, 6))
-  )
-
-  // 取病例數
-  const yData = chartData.value.map((i) => parseInt(i['確定病例數']))
-
-  // 設定要給 X 軸用的 scale 跟 axis
-  const xScale = d3
-    .scaleLinear()
-    .domain(d3.extent(xData))
-    .range([margin, rwdSvgWidth - margin]) // 寬度
-
-  // rwd X軸的刻度
-  let tickNumber = window.innerWidth > 900 ? xData.length / 2 : 8
-  const xAxis = d3
-    .axisBottom(xScale)
-    .ticks(tickNumber)
-    .tickFormat((d: string) => d + '週')
-
-  // 呼叫繪製x軸、調整x軸位置
-  const xAxisGroup = svg
-    .append('g')
-    .call(xAxis)
-    .attr('transform', `translate(0,${rwdSvgHeight - margin})`)
-
-  // 設定要給 Y 軸用的 scale 跟 axis
-  const yScale = d3
-    .scaleLinear()
-    .domain([0, d3.max(yData)])
-    .range([rwdSvgHeight - margin, margin]) // 數值要顛倒，才會從低往高排
-
-  const yAxis = d3.axisLeft(yScale).ticks(5)
-
-  // 呼叫繪製y軸、調整y軸位置
-  const yAxisGroup = svg.append('g').call(yAxis).attr('transform', `translate(${margin},0)`)
-
-  // 設定 path 的 d
-  const lineChart = d3
-    .line()
-    .x((d: { [x: string]: string }) => xScale(parseInt(d['發病年週'].substring(4, 6))))
-    .y((d: { [x: string]: string }) => yScale(parseInt(d['確定病例數'])))
-
-  // 建立折線圖
-  svg
-    .append('path')
-    .data(chartData.value)
-    .attr('d', lineChart(chartData.value))
-    .attr('fill', 'none')
-    .attr('stroke', 'steelblue')
-    .attr('stroke-width', 1.5)
-
-  // 使用 d3.bisector() 找到滑鼠的 X 軸 index 值
-  const bisect = d3.bisector((d: { [x: string]: any }) => d['發病年週']).left
-
-  // 建立沿著折線移動的圓點點
-  const focus = svg
-    .append('g')
-    .append('circle')
-    .style('fill', 'none')
-    .attr('stroke', 'black')
-    .attr('r', 5)
-    .style('opacity', 0)
-
-  // 建立移動的資料標籤
-  const focusText = svg
-    .append('g')
-    .append('text')
-    .style('opacity', 0)
-    .attr('text-anchor', 'left')
-    .attr('alignment-baseline', 'middle')
-
-  // 建立垂直和水平線
-  const verticalLine = svg
-    .append('line')
-    .attr('stroke', 'black')
-    .attr('stroke-width', 1)
-    .attr('stroke-dasharray', '4')
-    .style('opacity', 0)
-
-  const horizontalLine = svg
-    .append('line')
-    .attr('stroke', 'black')
-    .attr('stroke-width', 1)
-    .attr('stroke-dasharray', '4')
-    .style('opacity', 0)
-
-  const mouseover = () => {
-    focus.style('opacity', 1)
-    focusText.style('opacity', 1)
-    verticalLine.style('opacity', 1)
-    horizontalLine.style('opacity', 1)
-  }
-
-  const mousemove = (event: MouseEvent) => {
-    // 把目前X的位置用xScale去換算
-    const x0 = xScale.invert(d3.pointer(event)[0])
-    // 由於我的X軸資料是擷取過的，這邊要整理並補零
-    const fixedX0 = parseInt(x0).toString().padStart(2, '0')
-    // 接著把擷取掉的2021補回來，因為data是帶入原本的資料
-    let i = bisect(chartData.value, '2021' + fixedX0)
-    const selectedData = chartData.value[i]
-
-    // 圓點
-    focus
-      // 換算到X軸位置時，一樣使用擷取過的資料，才能準確換算到正確位置
-      .attr('cx', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('cy', yScale(selectedData['確定病例數']))
-
-    focusText
-      .html('確診人數：' + selectedData['確定病例數'])
-      .attr('x', xScale((selectedData['發病年週'] as string).substring(4, 6)) + 15)
-      .attr('y', yScale(selectedData['確定病例數']))
-
-    // 更新垂直和水平線的位置
-    verticalLine
-      .attr('x1', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('x2', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('y1', margin)
-      .attr('y2', rwdSvgHeight - margin)
-
-    horizontalLine
-      .attr('x1', margin)
-      .attr('x2', rwdSvgWidth - margin)
-      .attr('y1', yScale(selectedData['確定病例數']))
-      .attr('y2', yScale(selectedData['確定病例數']))
-  }
-
-  const mouseout = () => {
-    focus.style('opacity', 0)
-    focusText.style('opacity', 0)
-  }
-
-  // 建立一個覆蓋svg的方形
-  svg
-    .append('rect')
-    .style('fill', 'none')
-    .style('pointer-events', 'all')
-    .attr('width', rwdSvgWidth - margin)
-    .attr('height', rwdSvgHeight - margin)
-    .style('cursor', 'pointer')
-    .on('mouseover', mouseover)
-    .on('mousemove', (event: any) => mousemove(event))
-    .on('mouseout', mouseout)
-}
-
-const getData = async () => {
-  const dataGet = await d3.csv('../../../../public/data/20201-202140-covid19.csv')
-  chartData.value = dataGet.filter((i: { [x: string]: number }) => i['發病年週'] > 202101)
-  drawChart()
-}
-
-// d3.select(window).on('resize', drawChart)
-
 // 漲幅百分比(%)= (現價 - 昨收價) / 昨收價 ×100
 const calculatePriceChange = computed(() => {
   let changePercentage =
@@ -443,6 +287,575 @@ const fetchEquitiesValues = async () => {
   }
 }
 
+const test = async () => {
+  const resp = await getTest()
+  const formattedData = resp.data.map((item: any[]) => {
+    const result: { [key: string]: any } = {}
+    resp.fields.forEach((field: string, index: number) => {
+      result[field] = item[index]
+    })
+    return result
+  })
+}
+
+// Date: 交易日期，格式為 YYYY-MM-DD。
+// Open: 開盤價，當天交易開始時的價格。
+// High: 最高價，當天交易中的最高價格。
+// Low: 最低價，當天交易中的最低價格。
+// Close: 收盤價，當天交易結束時的價格。
+// AdjClose: 調整後的收盤價，考慮了股息、拆股等因素後的收盤價。
+// Volume: 成交量，當天交易的股票數量。
+const dataCSV = [
+  {
+    Date: '2017-12-01',
+    Open: 7326.700195,
+    High: 7355.399902,
+    Low: 7288.700195,
+    Close: 7300.5,
+    AdjClose: 7300.5,
+    Volume: 839825500
+  },
+  {
+    Date: '2017-12-04',
+    Open: 7300.5,
+    High: 7369.700195,
+    Low: 7300.5,
+    Close: 7339,
+    AdjClose: 7339,
+    Volume: 745259400
+  },
+  {
+    Date: '2017-12-05',
+    Open: 7339,
+    High: 7373.899902,
+    Low: 7326.600098,
+    Close: 7327.5,
+    AdjClose: 7327.5,
+    Volume: 881831300
+  },
+  {
+    Date: '2017-12-06',
+    Open: 7327.5,
+    High: 7369.700195,
+    Low: 7289.399902,
+    Close: 7348,
+    AdjClose: 7348,
+    Volume: 672957500
+  },
+  {
+    Date: '2017-12-07',
+    Open: 7348,
+    High: 7371.700195,
+    Low: 7314.600098,
+    Close: 7320.799805,
+    AdjClose: 7320.799805,
+    Volume: 803178700
+  },
+  {
+    Date: '2017-12-08',
+    Open: 7320.799805,
+    High: 7412.200195,
+    Low: 7314.200195,
+    Close: 7394,
+    AdjClose: 7394,
+    Volume: 1004623500
+  },
+  {
+    Date: '2017-12-11',
+    Open: 7394,
+    High: 7458.399902,
+    Low: 7393.600098,
+    Close: 7453.5,
+    AdjClose: 7453.5,
+    Volume: 906705100
+  },
+  {
+    Date: '2017-12-12',
+    Open: 7453.5,
+    High: 7501.5,
+    Low: 7448.299805,
+    Close: 7500.399902,
+    AdjClose: 7500.399902,
+    Volume: 991599100
+  },
+  {
+    Date: '2017-12-13',
+    Open: 7500.399902,
+    High: 7510.799805,
+    Low: 7492.600098,
+    Close: 7496.5,
+    AdjClose: 7496.5,
+    Volume: 998682800
+  },
+  {
+    Date: '2017-12-14',
+    Open: 7496.5,
+    High: 7496.700195,
+    Low: 7448.100098,
+    Close: 7448.100098,
+    AdjClose: 7448.100098,
+    Volume: 948434600
+  },
+  {
+    Date: '2017-12-15',
+    Open: 7448.100098,
+    High: 7490.600098,
+    Low: 7433.799805,
+    Close: 7490.600098,
+    AdjClose: 7490.600098,
+    Volume: 1182118000
+  },
+  {
+    Date: '2017-12-18',
+    Open: 7490.600098,
+    High: 7544.299805,
+    Low: 7490.600098,
+    Close: 7537,
+    AdjClose: 7537,
+    Volume: 568259400
+  },
+  {
+    Date: '2017-12-19',
+    Open: 7537,
+    High: 7563.5,
+    Low: 7534.100098,
+    Close: 7544.100098,
+    AdjClose: 7544.100098,
+    Volume: 675779500
+  },
+  {
+    Date: '2017-12-20',
+    Open: 7544.100098,
+    High: 7550.600098,
+    Low: 7511.5,
+    Close: 7525.200195,
+    AdjClose: 7525.200195,
+    Volume: 659315600
+  },
+  {
+    Date: '2017-12-21',
+    Open: 7525.200195,
+    High: 7609.700195,
+    Low: 7517.899902,
+    Close: 7604,
+    AdjClose: 7604,
+    Volume: 621347000
+  },
+  {
+    Date: '2017-12-22',
+    Open: 7604,
+    High: 7614.399902,
+    Low: 7585.5,
+    Close: 7592.700195,
+    AdjClose: 7592.700195,
+    Volume: 243831300
+  },
+  {
+    Date: '2017-12-27',
+    Open: 7592.700195,
+    High: 7632.700195,
+    Low: 7586.399902,
+    Close: 7620.700195,
+    AdjClose: 7620.700195,
+    Volume: 458380900
+  },
+  {
+    Date: '2017-12-28',
+    Open: 7620.700195,
+    High: 7633.600098,
+    Low: 7609.799805,
+    Close: 7622.899902,
+    AdjClose: 7622.899902,
+    Volume: 311875400
+  },
+  {
+    Date: '2017-12-29',
+    Open: 7622.899902,
+    High: 7697.600098,
+    Low: 7620,
+    Close: 7687.799805,
+    AdjClose: 7687.799805,
+    Volume: 289238900
+  },
+  {
+    Date: '2018-01-02',
+    Open: 7687.799805,
+    High: 7691.299805,
+    Low: 7624.100098,
+    Close: 7648.100098,
+    AdjClose: 7648.100098,
+    Volume: 576251800
+  },
+  {
+    Date: '2018-01-03',
+    Open: 7648.100098,
+    High: 7689.899902,
+    Low: 7640.5,
+    Close: 7671.100098,
+    AdjClose: 7671.100098,
+    Volume: 571662800
+  },
+  {
+    Date: '2018-01-04',
+    Open: 7671.100098,
+    High: 7702.5,
+    Low: 7671.100098,
+    Close: 7695.899902,
+    AdjClose: 7695.899902,
+    Volume: 705864000
+  },
+  {
+    Date: '2018-01-05',
+    Open: 7695.899902,
+    High: 7727.700195,
+    Low: 7689.799805,
+    Close: 7724.200195,
+    AdjClose: 7724.200195,
+    Volume: 636035700
+  },
+  {
+    Date: '2018-01-08',
+    Open: 7724.200195,
+    High: 7733.399902,
+    Low: 7691.799805,
+    Close: 7696.5,
+    AdjClose: 7696.5,
+    Volume: 635135400
+  },
+  {
+    Date: '2018-01-09',
+    Open: 7696.5,
+    High: 7733.100098,
+    Low: 7696.5,
+    Close: 7731,
+    AdjClose: 7731,
+    Volume: 709674500
+  },
+  {
+    Date: '2018-01-10',
+    Open: 7731,
+    High: 7756.100098,
+    Low: 7716.200195,
+    Close: 7748.5,
+    AdjClose: 7748.5,
+    Volume: 861758600
+  },
+  {
+    Date: '2018-01-11',
+    Open: 7748.5,
+    High: 7769,
+    Low: 7734.600098,
+    Close: 7762.899902,
+    AdjClose: 7762.899902,
+    Volume: 982791800
+  },
+  {
+    Date: '2018-01-12',
+    Open: 7762.899902,
+    High: 7792.600098,
+    Low: 7752.600098,
+    Close: 7778.600098,
+    AdjClose: 7778.600098,
+    Volume: 1133867000
+  },
+  {
+    Date: '2018-01-15',
+    Open: 7778.600098,
+    High: 7783.600098,
+    Low: 7763.399902,
+    Close: 7769.100098,
+    AdjClose: 7769.100098,
+    Volume: 551904700
+  },
+  {
+    Date: '2018-01-16',
+    Open: 7769.100098,
+    High: 7791.799805,
+    Low: 7740.600098,
+    Close: 7755.899902,
+    AdjClose: 7755.899902,
+    Volume: 824367900
+  },
+  {
+    Date: '2018-01-17',
+    Open: 7755.899902,
+    High: 7755.899902,
+    Low: 7711.100098,
+    Close: 7725.399902,
+    AdjClose: 7725.399902,
+    Volume: 822508200
+  },
+  {
+    Date: '2018-01-18',
+    Open: 7725.399902,
+    High: 7739.5,
+    Low: 7683.700195,
+    Close: 7701,
+    AdjClose: 7701,
+    Volume: 765527900
+  },
+  {
+    Date: '2018-01-19',
+    Open: 7701,
+    High: 7731.799805,
+    Low: 7694.700195,
+    Close: 7730.799805,
+    AdjClose: 7730.799805,
+    Volume: 795594100
+  },
+  {
+    Date: '2018-01-22',
+    Open: 7730.799805,
+    High: 7739.399902,
+    Low: 7703.700195,
+    Close: 7715.399902,
+    AdjClose: 7715.399902,
+    Volume: 730171300
+  },
+  {
+    Date: '2018-01-23',
+    Open: 7715.399902,
+    High: 7745.200195,
+    Low: 7710,
+    Close: 7731.799805,
+    AdjClose: 7731.799805,
+    Volume: 742420200
+  },
+  {
+    Date: '2018-01-24',
+    Open: 7731.799805,
+    High: 7732,
+    Low: 7643.399902,
+    Close: 7643.399902,
+    AdjClose: 7643.399902,
+    Volume: 746643300
+  },
+  {
+    Date: '2018-01-25',
+    Open: 7643.399902,
+    High: 7662.399902,
+    Low: 7608.5,
+    Close: 7615.799805,
+    AdjClose: 7615.799805,
+    Volume: 713251600
+  },
+  {
+    Date: '2018-01-26',
+    Open: 7615.799805,
+    High: 7667.399902,
+    Low: 7615.799805,
+    Close: 7665.5,
+    AdjClose: 7665.5,
+    Volume: 713831300
+  },
+  {
+    Date: '2018-01-29',
+    Open: 7665.5,
+    High: 7689.200195,
+    Low: 7663.899902,
+    Close: 7671.5,
+    AdjClose: 7671.5,
+    Volume: 612924000
+  },
+  {
+    Date: '2018-01-30',
+    Open: 7671.5,
+    High: 7671.700195,
+    Low: 7587.100098,
+    Close: 7588,
+    AdjClose: 7588,
+    Volume: 798999000
+  },
+  {
+    Date: '2018-01-31',
+    Open: 7588,
+    High: 7599,
+    Low: 7521.799805,
+    Close: 7533.600098,
+    AdjClose: 7533.600098,
+    Volume: 880751700
+  },
+  {
+    Date: '2018-02-01',
+    Open: 7533.600098,
+    High: 7554.700195,
+    Low: 7476.5,
+    Close: 7490.399902,
+    AdjClose: 7490.399902,
+    Volume: 872509100
+  },
+  {
+    Date: '2018-02-02',
+    Open: 7490.399902,
+    High: 7494.799805,
+    Low: 7432.299805,
+    Close: 7443.399902,
+    AdjClose: 7443.399902,
+    Volume: 871574000
+  },
+  {
+    Date: '2018-02-05',
+    Open: 7443.399902,
+    High: 7443.399902,
+    Low: 7334.799805,
+    Close: 7335,
+    AdjClose: 7335,
+    Volume: 888994600
+  },
+  {
+    Date: '2018-02-06',
+    Open: 7335,
+    High: 7335,
+    Low: 7079.399902,
+    Close: 7141.399902,
+    AdjClose: 7141.399902,
+    Volume: 1354591000
+  },
+  {
+    Date: '2018-02-07',
+    Open: 7141.399902,
+    High: 7311.5,
+    Low: 7141.399902,
+    Close: 7279.399902,
+    AdjClose: 7279.399902,
+    Volume: 1027400300
+  },
+  {
+    Date: '2018-02-08',
+    Open: 7279.399902,
+    High: 7279.399902,
+    Low: 7161.299805,
+    Close: 7170.700195,
+    AdjClose: 7170.700195,
+    Volume: 973611300
+  },
+  {
+    Date: '2018-02-09',
+    Open: 7170.700195,
+    High: 7170.700195,
+    Low: 7073,
+    Close: 7092.399902,
+    AdjClose: 7092.399902,
+    Volume: 927291900
+  },
+  {
+    Date: '2018-02-12',
+    Open: 7092.399902,
+    High: 7199.899902,
+    Low: 7092.399902,
+    Close: 7177.100098,
+    AdjClose: 7177.100098,
+    Volume: 718740600
+  },
+  {
+    Date: '2018-02-13',
+    Open: 7177.100098,
+    High: 7203,
+    Low: 7165.799805,
+    Close: 7168,
+    AdjClose: 7168,
+    Volume: 718988800
+  },
+  {
+    Date: '2018-02-14',
+    Open: 7168,
+    High: 7243.200195,
+    Low: 7145.700195,
+    Close: 7214,
+    AdjClose: 7214,
+    Volume: 940537000
+  }
+]
+
+// 定義對應的參數項目
+const stockDataMapping = {
+  Date: 'lastTradeDate', // 交易日期
+  Time: 'lastTradeTime', // 交易時間
+  Open: 'openingPrice', // 開盤價
+  High: 'highestPrice', // 最高價
+  Low: 'lowestPrice', // 最低價
+  Close: 'currentPrice', // 收盤價
+  Volume: 'currentVolume' // 當盤成交量
+}
+
+// 使用迴圈將對應的參數項目塞入 chartData2.data
+const updateChartData = () => {
+  const newData = []
+  for (const [key, value] of Object.entries(stockDataMapping)) {
+    if (Object.prototype.hasOwnProperty.call(stockData, value)) {
+      newData.push(stockData[value as keyof StockData])
+    }
+  }
+  console.log('newData:', newData)
+  // chartData2.data.push(newData)
+
+  const todayRecords = []
+  const startTime = new Date('2025-02-21T09:00:00')
+  for (let i = 0; i < 50; i++) {
+    const time = new Date(startTime.getTime() + i * 3 * 60000) // 每 3 分鐘一筆資料
+    const formattedTime = time.toTimeString().substring(0, 5)
+    const record = [
+      '2025/02/21',
+      formattedTime,
+      (1080 + i * 0.5).toFixed(2), // 開盤價
+      (1090 + i * 0.5).toFixed(2), // 最高價
+      (1075 + i * 0.5).toFixed(2), // 最低價
+      (1085 + i * 0.5).toFixed(2), // 收盤價
+      5000 + i * 100 // 成交量
+    ]
+    todayRecords.push(record)
+  }
+
+  todayRecords.forEach((record) => chartData2.data.push(record))
+  console.log('chartData2:', chartData2)
+}
+
+// TODO: 串接當盤交易量
+// 當盤成交量 currentVolume
+// 成交時間 {{ stockData.lastTradeDate }} {{ stockData.lastTradeTime }}
+// 當前股價 {{ stockData.currentPrice }}
+// 開盤價
+// 最高價
+// 最低價
+// 跌停價
+// 漲停價
+const chartData2: ChartData = {
+  data: []
+}
+
+// const chartData2: ChartData = {
+//   data: [
+//     ['20220104', 4957.98, 4917.77, 4961.45, 4874.53, 15153477600, -0.46],
+//     ['20220105', 4907.94, 4868.12, 4916.28, 4851.98, 17881610000, -1.01],
+//     ['20220106', 4868.12, 4820.45, 4870.12, 4800.23, 16234567890, -0.98],
+//     ['20220107', 4820.45, 4785.67, 4830.45, 4770.89, 15467890123, -0.75],
+//     ['20220108', 4785.67, 4750.34, 4790.56, 4740.12, 14876543210, -0.92],
+//     ['20220109', 4750.34, 4705.89, 4760.78, 4690.45, 14234567890, -1.05],
+//     ['20220110', 4705.89, 4670.23, 4710.34, 4660.12, 13678901234, -0.95],
+//     ['20220111', 4670.23, 4635.78, 4680.45, 4620.89, 13012345678, -0.85],
+//     ['20220112', 4635.78, 4600.34, 4640.56, 4590.12, 12456789012, -0.97],
+//     ['20220113', 4600.34, 4565.89, 4610.78, 4550.45, 11890123456, -0.9],
+//     ['20220114', 4565.89, 4530.23, 4570.34, 4520.12, 11323456789, -0.85],
+//     ['20220115', 4530.23, 4495.78, 4540.45, 4480.89, 10756789012, -0.95],
+//     ['20220116', 4495.78, 4460.34, 4500.56, 4450.12, 10190123456, -0.9],
+//     ['20220117', 4460.34, 4425.89, 4470.78, 4410.45, 9623456789, -0.85],
+//     ['20220118', 4425.89, 4390.23, 4430.34, 4380.12, 9056789012, -0.95],
+//     ['20220119', 4390.23, 4355.78, 4400.45, 4340.89, 8490123456, -0.9],
+//     ['20220120', 4355.78, 4320.34, 4360.56, 4310.12, 7923456789, -0.85],
+//     ['20220121', 4320.34, 4285.89, 4330.78, 4270.45, 7356789012, -0.95],
+//     ['20220122', 4285.89, 4250.23, 4290.34, 4240.12, 6790123456, -0.9],
+//     ['20220123', 4250.23, 4215.78, 4260.45, 4200.89, 6223456789, -0.85],
+//     ['20220124', 4215.78, 4180.34, 4220.56, 4170.12, 5656789012, -0.95],
+//     ['20220125', 4180.34, 4145.89, 4190.78, 4130.45, 5090123456, -0.9],
+//     ['20220126', 4145.89, 4110.23, 4150.34, 4100.12, 4523456789, -0.85],
+//     ['20220127', 4110.23, 4075.78, 4120.45, 4060.89, 3956789012, -0.95],
+//     ['20220128', 4075.78, 4040.34, 4080.56, 4030.12, 3390123456, -0.9],
+//     ['20220129', 4040.34, 4005.89, 4050.78, 3990.45, 2823456789, -0.85],
+//     ['20220130', 4005.89, 3970.23, 4010.34, 3960.12, 2256789012, -0.95],
+//     ['20220131', 3970.23, 3935.78, 3980.45, 3920.89, 1690123456, -0.9]
+//   ]
+// }
+
 watch(
   route,
   async (newRoute) => {
@@ -452,8 +865,9 @@ watch(
     currentStock.industry = newRoute.query.industry
     await getStockRealTime()
     await getCompanyOpenData()
-  }
-  // { immediate: true }
+    updateChartData()
+  },
+  { immediate: true }
 )
 
 // query 放在這裡會過早，導致娶不到 route query
@@ -475,6 +889,7 @@ onBeforeMount(() => {
   initStockTimer()
   getCategory()
   getCompanyOpenData()
+  test()
   loading.stop()
 })
 </script>
@@ -482,25 +897,40 @@ onBeforeMount(() => {
 <template>
   <div class="card">
     <div class="flex items-center">
-      <MainHeader :title="stockData.companyShortName" />
+      <MainHeader :title="stockData.companyShortName || ''" />
       <span class="text-xl text-gray-500">{{ stockData.stockCode }}</span>
     </div>
     <div :class="['price', 'flex', 'items-center', 'mb-4', { 'price--green': priceLower }]">
       <span class="price__current">{{ stockData.sellPrice }}</span>
       <span class="ml-6 price__percentage">{{ calculatePriceChange }}%</span>
     </div>
-    <div class="flex items-center">
-      <Tag
-        class="mr-4"
-        style="font-weight: 500"
-        severity="help"
-        :value="currentStock.industry"
-      ></Tag>
-      <span class="mr-2">成交張數 {{ stockData.accumulatedVolume }}</span>
-      <span>本益比 {{ equitiesData.peRatio }}</span>
+    <div class="flex justify-between items-center">
+      <div class="flex items-center">
+        <Tag
+          class="mr-5"
+          style="font-weight: 500"
+          severity="help"
+          :value="currentStock.industry"
+        ></Tag>
+        <div class="mr-5">
+          <span class="mr-1 text-gray-400">成交張數</span>
+          <span class="font-medium">{{ stockData.accumulatedVolume }}</span>
+        </div>
+        <div class="mr-5">
+          <span class="mr-1 text-gray-400">本益比</span>
+          <span class="font-medium">{{ equitiesData.peRatio }}</span>
+        </div>
+        <div class="mr-5">
+          <span class="mr-1 text-gray-400">實收資本額</span>
+          <span class="font-medium" v-amount-format="stockData.issueShares"></span>
+        </div>
+      </div>
       <div>
-        <span>實收資本額</span>
-        <span v-amount-format="stockData.issueShares"></span>
+        <p class="mr-1 text-gray-400">
+          <span class="mr-2">成交時間</span>|<span class="ml-2"
+            >{{ stockData.lastTradeDate }} {{ stockData.lastTradeTime }}</span
+          >
+        </p>
       </div>
     </div>
   </div>
@@ -512,12 +942,17 @@ onBeforeMount(() => {
     </TabList>
     <TabPanels>
       <TabPanel value="0">
-        <div class="m-0">
-          <!-- <div class="chart"></div> -->
-          <!-- <LineChart /> -->
-          <div v-for="(label, key) in fieldLabels" :key="key" class="form-group">
-            <label :for="key">{{ label }}：</label>
-            <span class="form-control">{{ stockData[key] }}</span>
+        <div class="flex m-0">
+          <div class="w-3/4 mx-auto">
+            <!-- <StockChart :chart-data="chartData2" /> -->
+            <CrosshairChart :data="chartData2" />
+            <!-- <CandlestickChart :data="dataCSV" /> -->
+          </div>
+          <div class="w-1/4 pl-4">
+            <div v-for="(label, key) in fieldLabels" :key="key" class="form-group">
+              <label :for="key">{{ label }}：</label>
+              <span class="form-control">{{ stockData[key] }}</span>
+            </div>
           </div>
         </div>
       </TabPanel>

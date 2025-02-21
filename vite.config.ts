@@ -54,15 +54,20 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/twse/, '')
       },
-      '/twse/openapi': {
+      '/openapi-twse': {
         target: 'https://openapi.twse.com.tw/v1',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/twse\/openapi/, '')
+        rewrite: (path) => path.replace(/^\/openapi-twse/, '')
       },
-      '/tpex/openapi': {
+      '/openapi-tpex': {
         target: 'https://www.tpex.org.tw/openapi/v1',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/tpex\/openapi/, '')
+        rewrite: (path) => path.replace(/^\/openapi-tpex/, '')
+      },
+      '/exchangeReport': {
+        target: 'http://www.twse.com.tw/exchangeReport',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/exchangeReport/, '')
       }
     }
   }
