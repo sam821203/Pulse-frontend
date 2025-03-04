@@ -10,22 +10,12 @@ const props = defineProps<{
 const chartRef = ref<HTMLElement | null>(null)
 const margin = { top: 50, right: 30, bottom: 30, left: 80 }
 const tooltipRef = ref<HTMLElement | null>(null)
+// 假設昨日收盤價為 85
+const previousClose = ref(0)
 
 // 格式化日期顯示
 const formatDate = (dateStr: string) => {
   return dateStr.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')
-}
-
-// 格式化提示文字
-const formatTooltip = (data: [string, number, number, number, number, number, number]) => {
-  return `${formatDate(data[0])}
-    交易時間：${data[1]} |
-    開盤價: ${data[2]} |
-    最高價: ${data[3]} |
-    最低價: ${data[4]} |
-    收盤價: ${data[5]} |
-    成交量: ${data[6]} |
-    `
 }
 
 const formatText = (data: [string, number, number, number, number, number, number]) => {
@@ -34,14 +24,13 @@ const formatText = (data: [string, number, number, number, number, number, numbe
         開盤價: ${data[2]} |
         最高價: ${data[3]} |
         最低價: ${data[4]} |
-        收盤價: ${data[5]} |
+        目前成交價: ${data[5]} |
         成交量: ${data[6]} |
         `
 }
 
 const initChart = () => {
-  if (!chartRef.value || !props.data.data.length) return
-
+  if (!chartRef.value) return
   const containerWidth = chartRef.value.clientWidth
   const containerHeight = Math.min(containerWidth * 0.5, 500)
   const width = containerWidth
@@ -61,46 +50,59 @@ const initChart = () => {
     .attr('viewBox', [0, 0, width, height])
 
   // 定義漸層
-  const gradient = svg
+  const gradientAbove = svg
     .append('defs')
     .append('linearGradient')
-    .attr('id', 'gradient')
+    .attr('id', 'gradientAbove')
     .attr('x1', '0%')
     .attr('x2', '0%')
     .attr('y1', '0%')
     .attr('y2', '100%')
 
-  gradient
+  gradientAbove
     .append('stop')
     .attr('offset', '0%')
     .attr('stop-color', '#883DCF')
     .attr('stop-opacity', 0.8)
 
-  gradient
+  gradientAbove
     .append('stop')
     .attr('offset', '100%')
     .attr('stop-color', '#883DCF')
     .attr('stop-opacity', 0)
 
-  // 計算蠟燭圖寬度
-  // const candleWidth = Math.max(1, innerWidth / props.data.data.length - 3)
-  // const candleWidth = 5
+  const gradientBelow = svg
+    .append('defs')
+    .append('linearGradient')
+    .attr('id', 'gradientBelow')
+    .attr('x1', '0%')
+    .attr('x2', '0%')
+    .attr('y1', '0%')
+    .attr('y2', '100%')
 
-  // X 軸比例尺
-  // const xScale = d3.scaleLinear().domain([0, props.data.data.length]).range([0, innerWidth])
+  gradientBelow
+    .append('stop')
+    .attr('offset', '0%')
+    .attr('stop-color', '#FF0000')
+    .attr('stop-opacity', 0.8)
 
-  // 定義時間點
-  // const timePoints = ['09:00', '10:00', '11:00', '12:00', '13:00', '13:30']
+  gradientBelow
+    .append('stop')
+    .attr('offset', '100%')
+    .attr('stop-color', '#FF0000')
+    .attr('stop-opacity', 0)
 
-  const xScale = d3.scaleLinear().domain([0, 270]).range([0, innerWidth])
+  const xScale = d3
+    .scaleTime()
+    .domain([0, 100])
+    // .domain(d3.extent(props.data.data, (d) => new Date(`${d[0]}T${d[1]}`)) as [Date, Date])
+    .range([0, innerWidth])
 
   // Y 軸比例尺
+  // TODO: 用昨日收盤價加
   const yScale = d3
     .scaleLinear()
-    .domain([
-      (d3.min(props.data.data, (d) => d[4]) as number) - 100,
-      (d3.max(props.data.data, (d) => d[3]) as number) + 100
-    ])
+    .domain([previousClose.value * 0.9, previousClose.value * 1.1])
     .range([innerHeight, 0])
 
   // 繪製標題
@@ -113,16 +115,13 @@ const initChart = () => {
   // 創建主圖層
   const mainGroup = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
-  // 繪製 X 軸
-  //   const xAxis = d3
-  //     .axisBottom(xScale)
-  //     .ticks(10)
-  //     .tickFormat((i) => formatDate(props.data.data[Math.floor(Number(i))]?.[0] || ''))
-  const xAxis = d3.axisBottom(xScale).ticks(props.data.data.length)
-  // .tickFormat((d, i) => {
-  //   const tickLabels = ['09:00', '10:00', '11:00', '12:00', '13:00', '13:30']
-  //   return tickLabels[i] || ''
-  // })
+  const xAxis = d3
+    .axisBottom(xScale)
+    .ticks(5)
+    .tickFormat((d, i) => {
+      const tickLabels = ['09:00', '10:00', '11:00', '12:00', '13:00', '13:30']
+      return tickLabels[i] || ''
+    })
 
   const xAxisGroup = mainGroup
     .append('g')
@@ -132,87 +131,83 @@ const initChart = () => {
   mainGroup.append('g').attr('transform', `translate(0,${innerHeight})`).call(xAxis)
 
   // 繪製 Y 軸
-  const yAxis = d3.axisLeft(yScale).ticks(10)
+  const yAxis = d3.axisLeft(yScale).ticks(5)
   const yAxisGroup = mainGroup.append('g').call(yAxis)
 
   // 添加 Y 軸網格線
   yAxisGroup.selectAll('.tick line').clone().attr('x2', innerWidth).attr('stroke-opacity', 0.1)
 
   // **新增 X 軸 tick 位置的垂直線**
-  xAxisGroup.selectAll('.tick').each(function (d) {
-    const x = xScale(d) // 計算 tick 在 x 軸的位置
-    mainGroup
-      .append('line')
-      .attr('x1', x)
-      .attr('x2', x)
-      .attr('y1', 0)
-      .attr('y2', innerHeight)
-      .attr('stroke', '#ccc') // 調整顏色
-      .attr('stroke-dasharray', '3,3') // 虛線樣式
-      .attr('stroke-opacity', 0.5)
-  })
-
-  // 繪製蠟燭圖
-  // const candlesticks = mainGroup
-  //   .selectAll('.candlestick')
-  //   .data(props.data.data)
-  //   .enter()
-  //   .append('g')
-  //   .attr('class', 'candlestick')
-
-  // 繪製蠟燭圖的線條
-  // candlesticks
-  //   .append('line')
-  //   .attr('x1', (d, i) => xScale(i) + candleWidth / 2)
-  //   .attr('x2', (d, i) => xScale(i) + candleWidth / 2)
-  //   .attr('y1', (d) => yScale(d[3]))
-  //   .attr('y2', (d) => yScale(d[4]))
-  //   .attr('stroke', (d) => (d[1] > d[2] ? '#34D399' : '#EF4444'))
-  //   .attr('stroke-width', 1)
-
-  // // 繪製蠟燭圖的矩形
-  // candlesticks
-  //   .append('rect')
-  //   .attr('x', (d, i) => xScale(i))
-  //   .attr('y', (d) => yScale(Math.max(d[1], d[2])))
-  //   .attr('width', candleWidth)
-  //   .attr('height', (d) => Math.abs(yScale(d[1]) - yScale(d[2])))
-  //   .attr('fill', (d) => (d[1] > d[2] ? '#34D399' : 'white'))
-  //   .attr('stroke', (d) => (d[1] > d[2] ? '#34D399' : '#EF4444'))
+  // xAxisGroup.selectAll('.tick').each(function (d) {
+  //   const x = xScale(d) // 計算 tick 在 x 軸的位置
+  //   mainGroup
+  //     .append('line')
+  //     .attr('x1', x)
+  //     .attr('x2', x)
+  //     .attr('y1', 0)
+  //     .attr('y2', innerHeight)
+  //     .attr('stroke', '#ccc') // 調整顏色
+  //     .attr('stroke-dasharray', '3,3') // 虛線樣式
+  //     .attr('stroke-opacity', 0.5)
+  // })
 
   // 繪製面積圖
-  const area = d3
-    .area<[number, number]>()
-    .x((d, i) => xScale(i))
-    .y0(innerHeight)
-    .y1((d) => yScale(d[1]))
+  // const areaAbove = d3
+  //   .area<[number, number]>()
+  //   .x((d, i) => {
+  //     console.log('d: ', d)
+  //     console.log('data: ', xScale(d[0]))
+  //     return xScale(d[0])
+  //   })
+  //   .y0(yScale(previousClose)) // 以昨日收盤價為基準線
+  //   .y1((d) => yScale(Math.max(d[1], previousClose)))
 
-  mainGroup
-    .append('path')
-    .datum(
-      props.data.data.map((d, i) => {
-        console.log(d)
-        console.log(i)
-        return [i, d[2]] as [number, number]
-      })
-    ) // 使用收盤價作為面積圖的數據
-    .attr('fill', 'url(#gradient)')
-    .attr('d', area)
+  // const areaBelow = d3
+  //   .area<[number, number]>()
+  //   .x((d, i) => {
+  //     return xScale(new Date(`2025-02-27T${props.data.data[i][1]}:00`))
+  //   })
+  //   .y0(yScale(previousClose))
+  //   .y1((d) => yScale(Math.min(d[1], previousClose)))
 
-  // 添加上方的 stroke
-  mainGroup
-    .append('path')
-    .datum(props.data.data.map((d, i) => [i, d[2]] as [number, number])) // 使用收盤價作為線條的數據
-    .attr('fill', 'none')
-    .attr('stroke', '#883DCF') // 添加 stroke
-    .attr('stroke-width', 2) // 設置 stroke 寬度
-    .attr(
-      'd',
-      d3
-        .line<[number, number]>()
-        .x((d, i) => xScale(i))
-        .y((d) => yScale(d[1]))
-    )
+  // mainGroup
+  //   .append('path')
+  //   .datum(
+  //     props.data.data.map((d, i) => {
+  //       return [new Date(`${d[0]}T${d[1]}`).getTime(), +d[5]] as [number, number]
+  //     })
+  //   ) // 使用收盤價作為面積圖的數據
+  //   .attr('fill', 'url(#gradientAbove)')
+  //   .attr('d', areaAbove)
+
+  // mainGroup
+  //   .append('path')
+  //   .datum(
+  //     props.data.data.map((d, i) => {
+  //       return [new Date(`2025-02-27T${d[1]}:00`).getTime(), +d[2]] as [number, number]
+  //     })
+  //   )
+  //   .attr('fill', 'url(#gradientBelow)')
+  //   .attr('d', areaBelow)
+
+  // // 添加上方的 stroke
+  // mainGroup
+  //   .append('path')
+  //   .datum(
+  //     props.data.data.map((d, i) => {
+  //       return [new Date(`2025-02-27T${d[1]}:00`).getTime(), +d[2]] as [number, number]
+  //     })
+  //   ) // 使用收盤價作為線條的數據
+  //   .attr('fill', 'none')
+  //   .attr('stroke', (d) => (d[1] >= previousClose ? '#883DCF' : '#FF0000')) // 根據價格變化顏色
+  //   .attr('stroke-width', 2) // 設置 stroke 寬度
+  //   .attr(
+  //     'd',
+  //     d3
+  //       .line<[number, number]>()
+  //       .x((d) => xScale(new Date(d[0])))
+  //       .y((d) => yScale(d[1]))
+  //   )
 
   // 創建十字線
   const crosshairX = mainGroup
@@ -282,24 +277,29 @@ const initChart = () => {
     })
     .on('mousemove', (event) => {
       const [mx, my] = d3.pointer(event)
-      const i = Math.floor(xScale.invert(mx))
+      const date = xScale.invert(mx)
+      const i = d3
+        .bisector((d: [number, number]) => d[0])
+        .left(
+          props.data.data.map((d) => [new Date(`2025-02-27T${d[1]}:00`).getTime(), +d[2]]),
+          date.getTime()
+        )
 
       if (i >= 0 && i < props.data.data.length) {
         const data = props.data.data[i]
-        // crosshairX.attr('transform', `translate(${xScale(i) + candleWidth / 2},0)`)
-        crosshairX.attr('transform', `translate(${xScale(i)},0)`)
-        crosshairY.attr('transform', `translate(0,${my})`)
-        crosshairPoint.attr('transform', `translate(${xScale(i)},${my})`)
+        const x = xScale(new Date(`2025-02-27T${data[1]}:00`))
+        const y = yScale(data[2])
+
+        crosshairX.attr('transform', `translate(${x},0)`)
+        crosshairY.attr('transform', `translate(0,${y})`)
+        crosshairPoint.attr('transform', `translate(${x},${y})`)
+
+        text.text(formatText(data))
 
         // tooltip
         //   .style('left', `${event.pageX + 10}px`)
         //   .style('top', `${event.pageY - 10}px`)
         //   .html(formatTooltip(data))
-        // 绘制数据提示信息
-
-        text.text(formatText(data))
-
-        tooltip.style('left', `10px`).style('top', `10px`).html(formatTooltip(data))
       }
     })
 }
@@ -323,6 +323,7 @@ onMounted(() => {
 watch(
   () => props.data,
   () => {
+    previousClose.value = Number(props.data.data[0][5])
     initChart()
   },
   { deep: true }

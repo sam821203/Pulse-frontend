@@ -32,15 +32,15 @@ export interface OTCCompanyData {
 }
 
 export interface ChartScaleData {
-  date: string
-  open: number
-  close: number
-  high: number
-  low: number
-  volume: number
-  change: number
+  lastTradeDate: string
+  lastTradeTime: string
+  openingPrice: string
+  highestPrice: string
+  lowestPrice: string
+  currentPrice: string
+  currentVolume: string
 }
 
 export interface ChartData {
-  data: [string, number, number, number, number, number, number][]
+  data: string[][]
 }

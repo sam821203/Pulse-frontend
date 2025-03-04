@@ -67,3 +67,11 @@ export async function getTest() {
   const resp = await fetch(`/exchangeReport/FMSRFK?date=20250203&stockNo=2330`)
   return resp.json()
 }
+
+export function getStockInfoRealTime(queryParams: string): Promise<any> {
+  return service({
+    method: 'GET',
+    url: `/stocks`,
+    params: queryParams
+  })
+}
