@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import * as d3 from 'd3'
-import LineChart from '../components/LineChart.vue'
 import MainHeader from '@/components/MainHeader.vue'
 import loading from '@/utils/loading'
 import {
@@ -8,9 +6,18 @@ import {
   getCategoryInfo,
   getEquitiesValuesFromTickers,
   getListedCompanyOpenData,
-  getOTCOpenData
+  getOTCOpenData,
+  getTest,
+  getStockInfoRealTime
 } from '@/api/stock/index'
 import type { StockData, ListedCompanyData, OTCCompanyData } from '../model/interface'
+// import CandlestickChart from '../components/C  andlestickChart.vue'
+import CrosshairChart from '../components/CrosshairChart.vue'
+// import StockChart from '../components/StockChart.vue'
+import type { ChartData, ChartScaleData } from '../model/interface'
+import cloneDeep from 'lodash/cloneDeep'
+import { subscribeStock } from '@/api/webSocket/socketService.js'
+import { string } from 'yup'
 
 const route = useRoute()
 
@@ -22,16 +29,6 @@ const currentStock = reactive({
   symbol: route.query.symbol,
   industry: route.query.industry
 })
-
-// 每日市場成交資訊
-// 'https://www.twse.com.tw/exchangeReport/FMTQIK?response=json&date=20220701'
-
-// fetch('https://www.twse.com.tw/exchangeReport/FMTQIK')
-//   .then((response) => response.json())
-//   .then((res) => {
-//     console.log('res: ', res)
-//   })
-//   .catch((err) => console.error(err))
 
 // 查詢各股歷史資料
 const getStockData = () => {
@@ -64,6 +61,7 @@ const getStockData = () => {
     // 只取今日資料
     if (data[i][0] == todayTwFormat) {
       closePrice = removeComma(data[i][6]) // 收盤指數 數字格式化
+
       variation = removeComma(data[i][7]) // 漲跌點數 數字格式化
       volume = removeComma(data[i][2]) // 成交量 數字格式化
 
@@ -73,15 +71,6 @@ const getStockData = () => {
       dailyRow = [todayEmailFormat, closePrice, variation, volume]
     }
   }
-
-  // // 如果有今日資料
-  // if (dailyRow.length) {
-  //   // 工作表增加一列資料
-  //   index_sheet.appendRow(dailyRow)
-
-  //   // 寄信通知
-  //   sendMailStock(dailyRow)
-  // }
 
   // 數字格式化
   function removeComma(number: any) {
@@ -113,19 +102,19 @@ const stockData = reactive<StockData>({
 })
 
 // 中文標籤與對應字段
-const fieldLabels: Record<keyof StockData, string> = {
+const fieldLabels: Partial<Record<keyof StockData, string>> = {
   sellVolume: '揭示賣量',
+  marketType: '上市別',
   buyVolume: '揭示買量',
   lastTradeDate: '最近交易日期',
   buyPrice: '揭示買價',
+  stockCode: '股票代號',
   sellPrice: '揭示賣價',
   openingPrice: '開盤價',
   lowestPrice: '最低價',
   highestPrice: '最高價',
   downLimitPrice: '跌停價',
-  accumulatedVolume: '累積成交量',
   upLimitPrice: '漲停價',
-  lastTradeTime: '最近成交時刻',
   currentVolume: '當盤成交量',
   companyName: '公司全名',
   currentPrice: '當盤成交價',
@@ -137,12 +126,32 @@ const formatNumber = (value: string) => {
   return isNaN(number) ? value : number.toFixed(2)
 }
 
+const formatDate = (dateString: string): string => {
+  if (dateString.length !== 8) {
+    throw new Error('Invalid date format')
+  }
+  const year = dateString.substring(0, 4)
+  const month = dateString.substring(4, 6)
+  const day = dateString.substring(6, 8)
+  return `${year}/${month}/${day}`
+}
+
+// 定義一個函數來格式化時間
+const formatTime = (timeString: string): string => {
+  if (timeString.length !== 8) {
+    throw new Error('Invalid time format')
+  }
+  const hours = timeString.substring(0, 2)
+  const minutes = timeString.substring(3, 5)
+  return `${hours}:${minutes}`
+}
+
 const stockDataAdapter = (data: any) => {
   return {
     sellVolume: formatNumber(data.f),
     marketType: data.ex,
     buyVolume: formatNumber(data.g),
-    lastTradeDate: data.d,
+    lastTradeDate: formatDate(data.d),
     buyPrice: formatNumber(data.b),
     stockCode: data.c,
     sellPrice: formatNumber(data.a),
@@ -153,13 +162,23 @@ const stockDataAdapter = (data: any) => {
     downLimitPrice: formatNumber(data.w),
     accumulatedVolume: data.v,
     upLimitPrice: formatNumber(data.u),
-    lastTradeTime: data.t,
-    currentVolume: formatNumber(data.tv),
+    lastTradeTime: formatTime(data.t),
+    currentVolume: data.tv,
     companyName: data.nf,
     currentPrice: formatNumber(data.z),
     previousClose: formatNumber(data.y)
   }
 }
+
+const currentChartData = reactive<ChartScaleData>({
+  date: '',
+  time: '',
+  open: '',
+  high: '',
+  low: '',
+  close: '',
+  volume: ''
+})
 
 const getStockRealTime = async () => {
   try {
@@ -169,9 +188,31 @@ const getStockRealTime = async () => {
     )
     const data = stockDataAdapter(resp.msgArray[0])
     Object.assign(stockData, data)
+    // const {
+    //   lastTradeDate,
+    //   lastTradeTime,
+    //   openingPrice,
+    //   highestPrice,
+    //   lowestPrice,
+    //   currentPrice,
+    //   currentVolume
+    // } = stockData
+    // currentChartData.date = lastTradeDate || ''
+    // currentChartData.time = lastTradeTime || ''
+    // currentChartData.open = openingPrice || ''
+    // currentChartData.high = highestPrice || ''
+    // currentChartData.low = lowestPrice || ''
+    // currentChartData.close = currentPrice || ''
+    // currentChartData.volume = currentVolume || ''
+    // TODO: 必須在一開始存取美股檔的歷史資料，否則當切換股票時，無法取得
+    // const newChartData = cloneDeep(currentChartData)
+    // chartData2.data.push(newChartData)
+    // console.log('chartData2:', chartData2.data)
+
+    // localStorage.setItem('chartData2', JSON.stringify(chartData2.data))
 
     // 取得本益比
-    fetchEquitiesValues()
+    // fetchEquitiesValues()
   } catch (err) {
     // TODO: 統一處理錯誤
     console.error(err)
@@ -213,7 +254,7 @@ const getCompanyOpenData = async () => {
 }
 
 const initStockTimer = async () => {
-  let delay = 5000
+  let delay = 3000
   let timerId = setTimeout(function request() {
     const now = new Date()
     const hours = now.getHours()
@@ -233,177 +274,6 @@ const initStockTimer = async () => {
     }
   }, delay)
 }
-
-const drawChart = () => {
-  // 刪除原本的svg.charts，重新渲染改變寬度的svg
-  d3.select('.chart svg').remove()
-
-  // RWD 的 svg 寬高
-  const rwdSvgWidth = parseInt(d3.select('.chart').style('width'))
-  const rwdSvgHeight = rwdSvgWidth * 0.5
-  const margin = 40
-  const bandWidth = 20
-  const svg = d3
-    .select('.chart')
-    .append('svg')
-    .attr('width', rwdSvgWidth)
-    .attr('height', rwdSvgHeight)
-
-  // map 資料集
-  // 取週數
-  const xData = chartData.value.map((i: { [key: string]: string }) =>
-    parseInt(i['發病年週'].substring(4, 6))
-  )
-
-  // 取病例數
-  const yData = chartData.value.map((i) => parseInt(i['確定病例數']))
-
-  // 設定要給 X 軸用的 scale 跟 axis
-  const xScale = d3
-    .scaleLinear()
-    .domain(d3.extent(xData))
-    .range([margin, rwdSvgWidth - margin]) // 寬度
-
-  // rwd X軸的刻度
-  let tickNumber = window.innerWidth > 900 ? xData.length / 2 : 8
-  const xAxis = d3
-    .axisBottom(xScale)
-    .ticks(tickNumber)
-    .tickFormat((d: string) => d + '週')
-
-  // 呼叫繪製x軸、調整x軸位置
-  const xAxisGroup = svg
-    .append('g')
-    .call(xAxis)
-    .attr('transform', `translate(0,${rwdSvgHeight - margin})`)
-
-  // 設定要給 Y 軸用的 scale 跟 axis
-  const yScale = d3
-    .scaleLinear()
-    .domain([0, d3.max(yData)])
-    .range([rwdSvgHeight - margin, margin]) // 數值要顛倒，才會從低往高排
-
-  const yAxis = d3.axisLeft(yScale).ticks(5)
-
-  // 呼叫繪製y軸、調整y軸位置
-  const yAxisGroup = svg.append('g').call(yAxis).attr('transform', `translate(${margin},0)`)
-
-  // 設定 path 的 d
-  const lineChart = d3
-    .line()
-    .x((d: { [x: string]: string }) => xScale(parseInt(d['發病年週'].substring(4, 6))))
-    .y((d: { [x: string]: string }) => yScale(parseInt(d['確定病例數'])))
-
-  // 建立折線圖
-  svg
-    .append('path')
-    .data(chartData.value)
-    .attr('d', lineChart(chartData.value))
-    .attr('fill', 'none')
-    .attr('stroke', 'steelblue')
-    .attr('stroke-width', 1.5)
-
-  // 使用 d3.bisector() 找到滑鼠的 X 軸 index 值
-  const bisect = d3.bisector((d: { [x: string]: any }) => d['發病年週']).left
-
-  // 建立沿著折線移動的圓點點
-  const focus = svg
-    .append('g')
-    .append('circle')
-    .style('fill', 'none')
-    .attr('stroke', 'black')
-    .attr('r', 5)
-    .style('opacity', 0)
-
-  // 建立移動的資料標籤
-  const focusText = svg
-    .append('g')
-    .append('text')
-    .style('opacity', 0)
-    .attr('text-anchor', 'left')
-    .attr('alignment-baseline', 'middle')
-
-  // 建立垂直和水平線
-  const verticalLine = svg
-    .append('line')
-    .attr('stroke', 'black')
-    .attr('stroke-width', 1)
-    .attr('stroke-dasharray', '4')
-    .style('opacity', 0)
-
-  const horizontalLine = svg
-    .append('line')
-    .attr('stroke', 'black')
-    .attr('stroke-width', 1)
-    .attr('stroke-dasharray', '4')
-    .style('opacity', 0)
-
-  const mouseover = () => {
-    focus.style('opacity', 1)
-    focusText.style('opacity', 1)
-    verticalLine.style('opacity', 1)
-    horizontalLine.style('opacity', 1)
-  }
-
-  const mousemove = (event: MouseEvent) => {
-    // 把目前X的位置用xScale去換算
-    const x0 = xScale.invert(d3.pointer(event)[0])
-    // 由於我的X軸資料是擷取過的，這邊要整理並補零
-    const fixedX0 = parseInt(x0).toString().padStart(2, '0')
-    // 接著把擷取掉的2021補回來，因為data是帶入原本的資料
-    let i = bisect(chartData.value, '2021' + fixedX0)
-    const selectedData = chartData.value[i]
-
-    // 圓點
-    focus
-      // 換算到X軸位置時，一樣使用擷取過的資料，才能準確換算到正確位置
-      .attr('cx', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('cy', yScale(selectedData['確定病例數']))
-
-    focusText
-      .html('確診人數：' + selectedData['確定病例數'])
-      .attr('x', xScale((selectedData['發病年週'] as string).substring(4, 6)) + 15)
-      .attr('y', yScale(selectedData['確定病例數']))
-
-    // 更新垂直和水平線的位置
-    verticalLine
-      .attr('x1', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('x2', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('y1', margin)
-      .attr('y2', rwdSvgHeight - margin)
-
-    horizontalLine
-      .attr('x1', margin)
-      .attr('x2', rwdSvgWidth - margin)
-      .attr('y1', yScale(selectedData['確定病例數']))
-      .attr('y2', yScale(selectedData['確定病例數']))
-  }
-
-  const mouseout = () => {
-    focus.style('opacity', 0)
-    focusText.style('opacity', 0)
-  }
-
-  // 建立一個覆蓋svg的方形
-  svg
-    .append('rect')
-    .style('fill', 'none')
-    .style('pointer-events', 'all')
-    .attr('width', rwdSvgWidth - margin)
-    .attr('height', rwdSvgHeight - margin)
-    .style('cursor', 'pointer')
-    .on('mouseover', mouseover)
-    .on('mousemove', (event: any) => mousemove(event))
-    .on('mouseout', mouseout)
-}
-
-const getData = async () => {
-  const dataGet = await d3.csv('../../../../public/data/20201-202140-covid19.csv')
-  chartData.value = dataGet.filter((i: { [x: string]: number }) => i['發病年週'] > 202101)
-  drawChart()
-}
-
-// d3.select(window).on('resize', drawChart)
 
 // 漲幅百分比(%)= (現價 - 昨收價) / 昨收價 ×100
 const calculatePriceChange = computed(() => {
@@ -443,6 +313,145 @@ const fetchEquitiesValues = async () => {
   }
 }
 
+const test = async () => {
+  const resp = await getTest()
+  const formattedData = resp.data.map((item: any[]) => {
+    const result: { [key: string]: any } = {}
+    resp.fields.forEach((field: string, index: number) => {
+      result[field] = item[index]
+    })
+    return result
+  })
+}
+
+// 定義對應的參數項目
+const stockDataMapping = {
+  Date: 'lastTradeDate', // 交易日期
+  Time: 'lastTradeTime', // 交易時間
+  Open: 'openingPrice', // 開盤價
+  High: 'highestPrice', // 最高價
+  Low: 'lowestPrice', // 最低價
+  Close: 'currentPrice', // 收盤價
+  Volume: 'currentVolume' // 當盤成交量
+}
+
+// 使用迴圈將對應的參數項目塞入 chartData2.data
+const updateChartData = () => {
+  const newData = []
+  for (const [key, value] of Object.entries(stockDataMapping)) {
+    if (Object.prototype.hasOwnProperty.call(stockData, value)) {
+      newData.push(stockData[value as keyof StockData])
+    }
+  }
+  console.log('newData:', newData)
+  // chartData2.data.push(newData)
+
+  const todayRecords = []
+  const startTime = new Date('2025-02-21T09:00:00')
+  for (let i = 0; i < 5; i++) {
+    const time = new Date(startTime.getTime() + i * 3 * 60000) // 每 3 分鐘一筆資料
+    const formattedTime = time.toTimeString().substring(0, 5)
+    const record = [
+      '2025/02/25',
+      formattedTime,
+      (1080 + i * 0.5).toFixed(2), // 開盤價
+      (1090 + i * 0.5).toFixed(2), // 最高價
+      (1075 + i * 0.5).toFixed(2), // 最低價
+      (1085 + i * 0.5).toFixed(2), // 收盤價
+      5000 + i * 100 // 成交量
+    ]
+    todayRecords.push(record)
+  }
+
+  todayRecords.forEach((record) => chartData2.data.push(record.map(String)))
+  console.log('chartData2:', chartData2)
+}
+
+// 模擬股票交易並每分鐘更新一次
+const generateMockData = () => {
+  const todayRecords = []
+  const startTime = new Date('2025-02-27T09:00:00')
+  let currentTime = startTime
+  let openPrice = 85.0
+
+  for (let i = 0; i < 100; i++) {
+    const formattedTime = currentTime.toTimeString().substring(0, 5)
+    if (formattedTime > '13:30') break
+
+    const highPrice = Math.min(openPrice * 1.1, openPrice + Math.random() * 2).toFixed(2)
+    const lowPrice = Math.max(openPrice * 0.9, openPrice - Math.random() * 2).toFixed(2)
+    const currentPrice = parseFloat((openPrice + Math.random() * 2 - 1).toFixed(2))
+
+    const volume = Math.floor(Math.random() * 10) + 1
+
+    const record = [
+      '2025/02/27',
+      formattedTime,
+      openPrice,
+      highPrice,
+      lowPrice,
+      currentPrice,
+      volume
+    ]
+    todayRecords.push(record)
+
+    currentTime = new Date(currentTime.getTime() + 3 * 60000) // 每 3 分鐘一筆資料
+  }
+
+  todayRecords.forEach((record) => chartData2.data.push(record))
+  console.log('chartData2:', chartData2)
+}
+
+// TODO: 串接當盤交易量
+// 當盤成交量 currentVolume
+// 成交時間 {{ stockData.lastTradeDate }} {{ stockData.lastTradeTime }}
+// 當前股價 {{ stockData.currentPrice }}
+// 開盤價
+// 最高價
+// 最低價
+// 跌停價
+// 漲停價
+const chartData2 = reactive<ChartData>({
+  data: []
+})
+
+// async function fetchStockHistory() {
+//   const response = await getStockInfoRealTime('9199')
+//   // const data = await response.json()
+//   console.log(response)
+// }
+
+// fetchStockHistory()
+
+const subscribeToStock = () => {
+  subscribeStock('2027', (data: any) => {
+    const now = new Date()
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+    const day = now.getDay()
+    // 只在週一到週五進行抓取
+    if (day === 0 || day === 6) return
+
+    // 只在每天的 09:00-13:30 之間進行抓取
+    if (hours >= 9 && (hours < 13 || (hours === 13 && minutes <= 30))) {
+      // console.log('subscribeStock:', data)
+      // 處理接收到的數據
+      const record = [
+        data.lastTradeDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'),
+        data.lastTradeTime,
+        data.openingPrice,
+        data.highestPrice,
+        data.lowestPrice,
+        data.previousClose,
+        data.currentPrice,
+        data.currentVolume
+      ]
+      console.log('record: ', record)
+      chartData2.data.push(record)
+    }
+  })
+}
+
 watch(
   route,
   async (newRoute) => {
@@ -450,8 +459,9 @@ watch(
     currentStock.market = newRoute.query.market
     currentStock.symbol = newRoute.query.symbol
     currentStock.industry = newRoute.query.industry
-    await getStockRealTime()
+    // await getStockRealTime()
     await getCompanyOpenData()
+    // updateChartData()
   }
   // { immediate: true }
 )
@@ -475,32 +485,55 @@ onBeforeMount(() => {
   initStockTimer()
   getCategory()
   getCompanyOpenData()
+  test()
+  // generateMockData()
+  // if (chartData2.data.length !== 0) {
+  // }
   loading.stop()
+})
+
+onMounted(() => {
+  subscribeToStock()
 })
 </script>
 
 <template>
   <div class="card">
     <div class="flex items-center">
-      <MainHeader :title="stockData.companyShortName" />
+      <MainHeader :title="stockData.companyShortName || ''" />
       <span class="text-xl text-gray-500">{{ stockData.stockCode }}</span>
     </div>
     <div :class="['price', 'flex', 'items-center', 'mb-4', { 'price--green': priceLower }]">
       <span class="price__current">{{ stockData.sellPrice }}</span>
       <span class="ml-6 price__percentage">{{ calculatePriceChange }}%</span>
     </div>
-    <div class="flex items-center">
-      <Tag
-        class="mr-4"
-        style="font-weight: 500"
-        severity="help"
-        :value="currentStock.industry"
-      ></Tag>
-      <span class="mr-2">成交張數 {{ stockData.accumulatedVolume }}</span>
-      <span>本益比 {{ equitiesData.peRatio }}</span>
+    <div class="flex justify-between items-center">
+      <div class="flex items-center">
+        <Tag
+          class="mr-5"
+          style="font-weight: 500"
+          severity="help"
+          :value="currentStock.industry"
+        ></Tag>
+        <div class="mr-5">
+          <span class="mr-1 text-gray-400">成交張數</span>
+          <span class="font-medium">{{ stockData.accumulatedVolume }}</span>
+        </div>
+        <div class="mr-5">
+          <span class="mr-1 text-gray-400">本益比</span>
+          <span class="font-medium">{{ equitiesData.peRatio }}</span>
+        </div>
+        <div class="mr-5">
+          <span class="mr-1 text-gray-400">實收資本額</span>
+          <span class="font-medium" v-amount-format="stockData.issueShares"></span>
+        </div>
+      </div>
       <div>
-        <span>實收資本額</span>
-        <span v-amount-format="stockData.issueShares"></span>
+        <p class="mr-1 text-gray-400">
+          <span class="mr-2">成交時間</span>|<span class="ml-2"
+            >{{ stockData.lastTradeDate }} {{ stockData.lastTradeTime }}</span
+          >
+        </p>
       </div>
     </div>
   </div>
@@ -512,12 +545,17 @@ onBeforeMount(() => {
     </TabList>
     <TabPanels>
       <TabPanel value="0">
-        <div class="m-0">
-          <!-- <div class="chart"></div> -->
-          <!-- <LineChart /> -->
-          <div v-for="(label, key) in fieldLabels" :key="key" class="form-group">
-            <label :for="key">{{ label }}：</label>
-            <span class="form-control">{{ stockData[key] }}</span>
+        <div class="flex m-0">
+          <div class="w-3/4 mx-auto">
+            <!-- <StockChart :chart-data="chartData2" /> -->
+            <CrosshairChart :data="chartData2" />
+            <!-- <CandlestickChart :data="dataCSV" /> -->
+          </div>
+          <div class="w-1/4 pl-4">
+            <div v-for="(label, key) in fieldLabels" :key="key" class="form-group">
+              <label :for="key">{{ label }}：</label>
+              <span class="form-control">{{ stockData[key] }}</span>
+            </div>
           </div>
         </div>
       </TabPanel>
