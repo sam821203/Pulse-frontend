@@ -52,7 +52,7 @@ export async function getListedCompanyOpenData() {
 
 /**
  * 上櫃股票基本資料
- * https://www.tpex.org.tw/openapi
+ * https://www.tpex.org.tw/openapi/
  */
 export async function getOTCOpenData() {
   const resp = await fetch(`/openapi-tpex/mopsfin_t187ap03_O`)
