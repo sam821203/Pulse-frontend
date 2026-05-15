@@ -3,5 +3,10 @@
     "Vue.volar",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode"
+  ],
+  "unwantedRecommendations": [
+    "johnsoncodehk.volar",
+    "johnsoncodehk.vscode-typescript-vue-plugin",
+    "octref.vetur"
   ]
 }
