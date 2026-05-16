@@ -1,0 +1,24 @@
+---
+description: Branch naming recommendations for Pulse-frontend
+alwaysApply: false
+---
+
+# Branch naming (Git Flow)
+
+Use a **prefix** and **slug**:
+
+```
+<prefix>/<slug>
+```
+
+- **Prefixes**: `feature`, `fix`, `hotfix`, `chore`, `docs`, `refactor`, `test`, `release`.
+- **Slug**: lowercase letters and digits, segments separated by `-` (avoid spaces and underscores).
+
+**Fork from**:
+
+- **`develop`**: `feature/*`, `fix/*`, `chore/*`, `docs/*`, `refactor/*`, `test/*`, `release/*`
+- **`main`**: **`hotfix/*`** only (production fixes)
+
+Examples: `feature/stock-chart`, `fix/login-token`, `chore/vite-proxy`, `hotfix/payment-error`.
+
+Protected names used as-is: `main`, `master`, `develop`.

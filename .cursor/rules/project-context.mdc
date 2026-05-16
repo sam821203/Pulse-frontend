@@ -1,0 +1,12 @@
+---
+description: Pulse frontend stack and layout; read when orienting in the repo
+alwaysApply: true
+---
+
+# Pulse frontend
+
+- **Stack**: Vue 3 (Composition API, `<script setup lang="ts">`), Vite 5, TypeScript, Pinia, Vue Router, PrimeVue + Element Plus icons, Tailwind, Sass.
+- **HTTP**: Shared Axios instance in [src/api/index.ts](mdc:src/api/index.ts); feature APIs under `src/api/**/`.
+- **Realtime**: Socket.IO client (e.g. [src/api/webSocket/socketService.js](mdc:src/api/webSocket/socketService.js)).
+- **Scripts**: `npm run dev`, `npm run build`, `npm run type-check`, `npm run lint`, `npm run test:unit`.
+- **Git Flow**: `main` (production), `develop` (integration). Day-to-day branches (`feature/*`, `fix/*`, etc.) fork from **`develop`**; **`hotfix/*`** forks from **`main`**. Repo default branch may still be `main`; target **`develop`** for feature PRs unless it is a hotfix.

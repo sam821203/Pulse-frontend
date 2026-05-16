@@ -1,0 +1,13 @@
+---
+description: Strict TypeScript rules for scripts and logic
+globs: **/*.{ts,vue}
+alwaysApply: false
+---
+
+# TypeScript (Pulse)
+
+- **No `any`**: Use concrete types, generics, or `unknown` plus narrowing (e.g. validated parsing).
+- **Explicit exports**: Exported functions should have explicit return types where inference is unclear.
+- **Null safety**: Handle `null` / `undefined`; avoid non-null assertions (`!`) unless justified.
+- **Narrow over cast**: Prefer type guards and generics instead of `as` assertions.
+- **Vue SFCs**: In `.vue` files, type `defineProps` / `defineEmits` explicitly; keep `<script setup lang="ts">` logic typed the same as standalone `.ts`.

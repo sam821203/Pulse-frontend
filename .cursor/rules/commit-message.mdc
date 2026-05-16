@@ -1,0 +1,23 @@
+---
+description: Commit message format for this repo (Conventional Commits)
+alwaysApply: false
+---
+
+# Commit messages
+
+Use **Conventional Commits**:
+
+```
+<type>(<scope>): <subject>
+```
+
+- **Subject**: imperative mood, lowercase, no trailing period (e.g. `fix(api): handle 401 redirect`).
+- **type**: one of `feat`, `fix`, `refactor`, `perf`, `style`, `test`, `docs`, `chore`, `build`, `ci`.
+- **scope**: exactly one of  
+  `ui`, `page`, `component`, `composable`, `api`, `store`, `router`, `auth`, `theme`, `build`, `test`, `docs`, `devops`, `deps`.
+
+Examples:
+
+- `feat(page): add stock detail layout`
+- `fix(api): normalize login error response`
+- `chore(deps): bump vue-router`
