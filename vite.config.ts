@@ -33,6 +33,7 @@ export default defineConfig({
       dts: 'src/auto-imports.d.ts'
     }),
     Components({
+      dirs: ['src/components', 'src/modules/**/components'],
       resolvers: [PrimeVueResolver()]
     })
   ],
