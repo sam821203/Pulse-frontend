@@ -1,10 +1,5 @@
-import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
-// import { useToast } from 'primevue/usetoast'
-import { storeToRefs } from 'pinia'
+import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { useToastStore } from '@/stores/modules/toast'
-
-const toastStore = useToastStore()
-const { toastMsg } = storeToRefs(toastStore)
 
 const baseURL: string = 'http://127.0.0.1:3000'
 const service = axios.create({
@@ -31,8 +26,7 @@ service.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized error
-      toastMsg.value = 'Unauthorized. Please log in again.'
+      useToastStore().toastMsg = 'Unauthorized. Please log in again.'
     }
     return Promise.reject(error)
   }
