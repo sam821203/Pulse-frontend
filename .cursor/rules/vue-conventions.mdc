@@ -1,0 +1,13 @@
+---
+description: Vue 3 SFC patterns for this project
+globs: **/*.vue
+alwaysApply: false
+---
+
+# Vue conventions
+
+- Prefer **Composition API** with `<script setup lang="ts">`.
+- Use **PrimeVue** components and existing layout/header patterns in [src/components/](mdc:src/components/) before introducing new UI libraries.
+- **State**: Use Pinia stores under `src/stores/` for cross-route state; keep local UI state as `ref` / `computed` in the component.
+- **Routing**: Register routes in the router module; lazy-load heavy views where it fits existing patterns.
+- **Styling**: Match existing Tailwind / Sass usage in neighboring components.

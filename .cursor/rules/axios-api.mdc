@@ -1,0 +1,13 @@
+---
+description: Axios client usage and API module layout
+globs: src/api/**/*.ts
+alwaysApply: false
+---
+
+# API layer (Axios)
+
+- **Single instance**: Import the configured client from [src/api/index.ts](mdc:src/api/index.ts) (`export default service`). Do not create parallel Axios instances unless there is a strong reason.
+- **Modules**: Group endpoints by domain under `src/api/<domain>/index.ts` (e.g. `auth`, `stock`, `user`).
+- **Types**: Define request/response shapes next to the functions or in a colocated `types.ts` within the same folder; export types with `export type` / `export interface`.
+- **Consumers**: Prefer `import type { ... }` for types-only imports in Vue/Pinia files to avoid pulling server-shaped objects into bundles unnecessarily.
+- **Responses**: Remember interceptors return `res.data` from the shared instance—typing should match the unwrapped payload.
