@@ -1,6 +1,6 @@
 ---
 name: branch-and-commit
-description: "Git Flow: create branch from develop (or main for hotfix) and commit changes once"
+description: "Git Flow: branch from develop or main when on trunk, else commit once on current branch"
 disable-model-invocation: true
 ---
 
@@ -10,14 +10,24 @@ When invoked, do the following in order.
 
 ## 1. Read conventions
 
-- **[branch-naming.mdc](rule:branch-naming.mdc)** — new branch name and base branch (`develop` vs `main`).
-- **[commit-message.mdc](rule:commit-message.mdc)** — commit message.
+- **[branch-naming.mdc](rule:branch-naming.mdc)** — branch name (`<prefix>/<slug>`) when **creating** a branch, and conventions.
+- **[commit-message.mdc](rule:commit-message.mdc)** — commit message (`<type>(<scope>): <subject>`).
 
 ## 2. Inspect changes
 
-- `git status` and `git diff --stat` to understand scope and pick branch prefix/slug.
+- `git branch --show-current` → **current branch** (if empty / detached HEAD, stop and ask the user to checkout a named branch).
+- `git status` and `git diff --stat` to understand scope and pick branch prefix/slug plus commit wording.
 
-## 3. Branch (Git Flow)
+## 3. Branch (Git Flow): path A vs path B
+
+Treat these as **trunk/integration** branches → **path A**: `main`, `develop`, `master`.
+
+**Path B — not on trunk** (`feature/*`, `fix/*`, or any other named branch):
+
+- **Do not** `git checkout` to another branch and **do not** `git checkout -b`.
+- Go to **[§ 4 Single commit](#4-single-commit)** on the **current branch**.
+
+**Path A — on trunk**:
 
 Pick the **base branch** before `git checkout -b`:
 
@@ -39,4 +49,5 @@ Then: `git checkout -b <prefix>/<slug>` per the branch rule.
 
 ## 5. Summarize
 
-- Report branch name, base branch used, and commit message.
+- **Path A**: report new branch name, **base branch** used (`develop` / `main`), and commit message.
+- **Path B**: report commit message and that changes were committed on **`<current-branch>`** (**no new branch**).
