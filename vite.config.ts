@@ -39,7 +39,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
+    },
+    dedupe: ['vue', 'primevue']
+  },
+  optimizeDeps: {
+    include: [
+      'primevue/config',
+      'primevue/useconfirm',
+      'primevue/usetoast',
+      'primevue/confirmationservice',
+      'primevue/toastservice',
+      'primevue/confirmationeventbus'
+    ]
   },
   server: {
     port: 8090,
