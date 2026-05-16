@@ -24,6 +24,7 @@ Pick one (matches commit scopes in `.cursor/rules/commit-message.mdc`):
 - [ ] test
 - [ ] docs
 - [ ] devops
+- [ ] deps
 
 ## Screenshots / recording (if UI)
 
