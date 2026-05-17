@@ -34,7 +34,14 @@ export default defineConfig({
     }),
     Components({
       dirs: ['src/components', 'src/modules/**/components'],
-      resolvers: [PrimeVueResolver()]
+      resolvers: [PrimeVueResolver()],
+      dts: 'src/components.d.ts',
+      excludeNames: [
+        'StockBidAskRatioBar',
+        'StockOrderBook',
+        'StockQuoteFieldGrid',
+        'StockQuoteStrip'
+      ]
     })
   ],
   resolve: {
