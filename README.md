@@ -24,6 +24,33 @@ A real-time stock tracking and analysis platform built with Vue3. It provides re
 npm install
 ```
 
+### Cursor agent skills (optional)
+
+This repo tracks **project-specific** Cursor rules under `.cursor/` (committed). **Agent skills** from the open ecosystem are listed in `skills-lock.json` but installed under `.agents/skills/`, which is gitignored.
+
+After cloning on a new machine, install the locked skills into the project (requires [Node.js](https://nodejs.org/) for `npx`):
+
+```sh
+npx skills add sickn33/antigravity-awesome-skills --skill claude-d3js-skill -a cursor -y
+npx skills add harlan-zw/vue-ecosystem-skills --skill primevue-skilld -a cursor -y
+npx skills add hairyf/skills --skill tailwindcss -a cursor -y
+npx skills add wshobson/agents --skill typescript-advanced-types -a cursor -y
+npx skills add github/awesome-copilot --skill unit-test-vue-pinia -a cursor -y
+npx skills add antfu/skills --skill vue --skill vite --skill vitest -a cursor -y
+npx skills add hyf0/vue-skills --skill vue-best-practices --skill vue-debug-guides --skill vue-pinia-best-practices -a cursor -y
+npx skills add teachingai/full-stack-skills --skill vue-router-v4 -a cursor -y
+```
+
+Verify installation:
+
+```sh
+npx skills list -a cursor
+```
+
+Restart Cursor or open a new Agent chat so skills are discovered. To update installed skills later: `npx skills update -a cursor -y`.
+
+> **Note:** Some upstream skills target newer tool versions (e.g. Tailwind v4, Vitest 3) than this project’s `package.json`. Treat `package.json` as the source of truth for runtime versions.
+
 ### Compile and Hot-Reload for Development
 
 ```sh
