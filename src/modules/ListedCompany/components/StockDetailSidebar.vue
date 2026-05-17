@@ -1,28 +1,65 @@
 <script setup lang="ts">
-import { EMPTY, fieldGroups, fieldLabels } from '../constants/stockFields'
+import StockBidAskRatioBar from './StockBidAskRatioBar.vue'
+import StockOrderBook from './StockOrderBook.vue'
+import StockQuoteFieldGrid from './StockQuoteFieldGrid.vue'
+import { useStockQuotePanel } from '../composables/useStockQuotePanel'
 import type { StockData } from '../model/interface'
 
 const props = defineProps<{
   stockData: StockData
+  peRatio?: string
 }>()
 
-const displayFieldValue = (key: keyof StockData): string => {
-  const value = props.stockData[key]
-  if (value === undefined || value === null || value === '') return EMPTY
-  return String(value)
-}
+const accordionValue = ref<string[]>(['報價摘要', '五檔'])
+
+const { leftFields, rightFields, bidAskRatio, orderBook } = useStockQuotePanel(
+  () => props.stockData,
+  () => props.peRatio ?? ''
+)
 </script>
 
 <template>
-  <aside class="w-full lg:w-1/4 lg:pl-2">
-    <section v-for="group in fieldGroups" :key="group.title" class="mb-5">
-      <h4 class="text-sm font-semibold text-gray-500 mb-2">{{ group.title }}</h4>
-      <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        <template v-for="key in group.keys" :key="key">
-          <dt class="text-gray-400">{{ fieldLabels[key] }}</dt>
-          <dd class="font-medium m-0 text-gray-800">{{ displayFieldValue(key) }}</dd>
-        </template>
-      </dl>
-    </section>
+  <aside class="stock-sidebar min-w-0">
+    <div class="hidden xl:block stock-sidebar__panel space-y-3">
+      <StockQuoteFieldGrid :left-fields="leftFields" :right-fields="rightFields" />
+      <StockBidAskRatioBar :ratio="bidAskRatio" />
+      <StockOrderBook :order-book="orderBook" />
+    </div>
+
+    <Accordion v-model:value="accordionValue" class="xl:hidden stock-sidebar__accordion" multiple>
+      <AccordionPanel value="報價摘要">
+        <AccordionHeader>報價摘要</AccordionHeader>
+        <AccordionContent>
+          <div class="space-y-3 pt-1">
+            <StockQuoteFieldGrid :left-fields="leftFields" :right-fields="rightFields" />
+            <StockBidAskRatioBar :ratio="bidAskRatio" />
+          </div>
+        </AccordionContent>
+      </AccordionPanel>
+      <AccordionPanel value="五檔">
+        <AccordionHeader>五檔</AccordionHeader>
+        <AccordionContent>
+          <div class="pt-1">
+            <StockOrderBook :order-book="orderBook" />
+          </div>
+        </AccordionContent>
+      </AccordionPanel>
+    </Accordion>
   </aside>
 </template>
+
+<style scoped lang="scss">
+.stock-sidebar {
+  :deep(.p-accordionheader) {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  :deep(.p-accordioncontent-content) {
+    padding-top: 0;
+    padding-bottom: 0.5rem;
+  }
+}
+</style>
