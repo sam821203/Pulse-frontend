@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { getStockInfo } from '@/api/stock/index'
-import type { StockData } from '@/modules/User/model/interface'
+import type { StockData } from '@/modules/ListedCompany/model/interface'
 
 export const useStockStore = defineStore('stock', () => {
   const allStocksData = ref<any>(null)
