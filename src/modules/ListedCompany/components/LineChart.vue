@@ -121,30 +121,32 @@ const drawChart = () => {
     // 接著把擷取掉的2021補回來，因為data是帶入原本的資料
     let i = bisect(chartData.value, '2021' + fixedX0)
     const selectedData = chartData.value[i]
+    const week = parseInt(selectedData['發病年週'].substring(4, 6), 10)
+    const value = parseInt(selectedData['確定病例數'], 10)
 
     // 圓點
     focus
       // 換算到X軸位置時，一樣使用擷取過的資料，才能準確換算到正確位置
-      .attr('cx', xScale(parseInt((selectedData['發病年週'] as string).substring(4, 6))))
-      .attr('cy', yScale(parseInt(selectedData['確定病例數'])))
+      .attr('cx', xScale(week))
+      .attr('cy', yScale(value))
 
     focusText
-      .html('確診人數：' + selectedData['確定病例數'])
-      .attr('x', xScale((selectedData['發病年週'] as string).substring(4, 6)) + 15)
-      .attr('y', yScale(selectedData['確定病例數']))
+      .html(`第 ${week} 週 | 數值：${value}`)
+      .attr('x', xScale(week) + 15)
+      .attr('y', yScale(value))
 
     // 更新垂直和水平線的位置
     verticalLine
-      .attr('x1', xScale((selectedData['發病年週'] as string).substring(4, 6)))
-      .attr('x2', xScale((selectedData['發病年週'] as string).substring(4, 6)))
+      .attr('x1', xScale(week))
+      .attr('x2', xScale(week))
       .attr('y1', margin)
       .attr('y2', rwdSvgHeight - margin)
 
     horizontalLine
       .attr('x1', margin)
       .attr('x2', rwdSvgWidth - margin)
-      .attr('y1', yScale(selectedData['確定病例數']))
-      .attr('y2', yScale(selectedData['確定病例數']))
+      .attr('y1', yScale(value))
+      .attr('y2', yScale(value))
   }
 
   const mouseout = () => {

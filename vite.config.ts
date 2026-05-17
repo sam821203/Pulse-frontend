@@ -33,7 +33,15 @@ export default defineConfig({
       dts: 'src/auto-imports.d.ts'
     }),
     Components({
-      resolvers: [PrimeVueResolver()]
+      dirs: ['src/components', 'src/modules/**/components'],
+      resolvers: [PrimeVueResolver()],
+      dts: 'src/components.d.ts',
+      excludeNames: [
+        'StockBidAskRatioBar',
+        'StockOrderBook',
+        'StockQuoteFieldGrid',
+        'StockQuoteStrip'
+      ]
     })
   ],
   resolve: {

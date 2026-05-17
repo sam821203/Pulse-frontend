@@ -171,7 +171,7 @@ onMounted(async () => {
       z-index: 1000;
     "
   ></ul>
-  <div class="layout-topbar">
+  <div class="layout-topbar border-b">
     <div class="layout-topbar-logo-container">
       <button class="layout-menu-button layout-topbar-action" @click="onMenuToggle">
         <i class="pi pi-bars"></i>
@@ -270,6 +270,10 @@ onMounted(async () => {
 </template>
 
 <style lang="scss">
+.layout-topbar {
+  border-color: var(--surface-border);
+}
+
 .search-bar {
   &__input {
     width: 400px;
