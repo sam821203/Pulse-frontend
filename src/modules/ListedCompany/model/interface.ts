@@ -1,3 +1,26 @@
+import type { ChartRecordTuple } from '../utils/chartTime'
+
+export interface OrderBookLevel {
+  price: number
+  volume: number
+}
+
+export interface OrderBookRow {
+  bidVolume: number
+  bidPrice: number
+  askPrice: number
+  askVolume: number
+  highlightBid: boolean
+  highlightAsk: boolean
+}
+
+export interface OrderBookView {
+  rows: OrderBookRow[]
+  totalBidVolume: number
+  totalAskVolume: number
+  maxVolume: number
+}
+
 export interface StockData {
   sellVolume?: string
   marketType?: string
@@ -19,6 +42,8 @@ export interface StockData {
   currentPrice?: string
   previousClose?: string
   issueShares?: string
+  innerVolume?: string
+  outerVolume?: string
 }
 
 export interface ListedCompanyData {
@@ -42,5 +67,5 @@ export interface ChartScaleData {
 }
 
 export interface ChartData {
-  data: string[][]
+  data: ChartRecordTuple[]
 }

@@ -1,10 +1,41 @@
 import { EMPTY } from '../constants/stockFields'
 import type { StockData } from '../model/interface'
 
-export function formatNumber(value: string | undefined): string {
-  if (!value) return EMPTY
+export function parseNumeric(value: string | undefined): number | null {
+  if (!value || value === EMPTY || value === '-') return null
   const number = parseFloat(String(value).replace(/,/g, ''))
-  return Number.isNaN(number) ? value : number.toFixed(2)
+  return Number.isNaN(number) ? null : number
+}
+
+export function formatPrice(value: string | number | undefined, digits = 1): string {
+  const number = typeof value === 'number' ? value : parseNumeric(value)
+  if (number === null) {
+    if (!value || value === EMPTY) return EMPTY
+    return String(value)
+  }
+  return new Intl.NumberFormat('zh-TW', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  }).format(number)
+}
+
+export function formatInteger(value: string | number | undefined): string {
+  const number = typeof value === 'number' ? value : parseNumeric(value)
+  if (number === null) {
+    if (!value || value === EMPTY) return EMPTY
+    return String(value)
+  }
+  return new Intl.NumberFormat('zh-TW', {
+    maximumFractionDigits: 0
+  }).format(Math.round(number))
+}
+
+export function formatBillions(value: number | null | undefined, digits = 2): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return EMPTY
+  return new Intl.NumberFormat('zh-TW', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  }).format(value)
 }
 
 export function formatDate(dateString: string): string {
@@ -26,27 +57,32 @@ export function formatTime(timeString: string): string {
   return timeString
 }
 
+function rawOrEmpty(value: string | undefined): string {
+  if (!value || value === '-') return ''
+  return value
+}
+
 export function stockDataAdapter(data: Record<string, string>): StockData {
   return {
-    sellVolume: formatNumber(data.f),
+    sellVolume: rawOrEmpty(data.f),
     marketType: data.ex || EMPTY,
-    buyVolume: formatNumber(data.g),
+    buyVolume: rawOrEmpty(data.g),
     lastTradeDate: formatDate(data.d),
-    buyPrice: formatNumber(data.b),
+    buyPrice: rawOrEmpty(data.b),
     stockCode: data.c || EMPTY,
-    sellPrice: formatNumber(data.a),
+    sellPrice: rawOrEmpty(data.a),
     companyShortName: data.n || EMPTY,
-    openingPrice: formatNumber(data.o),
-    lowestPrice: formatNumber(data.l),
-    highestPrice: formatNumber(data.h),
-    downLimitPrice: formatNumber(data.w),
+    openingPrice: formatPrice(data.o),
+    lowestPrice: formatPrice(data.l),
+    highestPrice: formatPrice(data.h),
+    downLimitPrice: formatPrice(data.w),
     accumulatedVolume: data.v || EMPTY,
-    upLimitPrice: formatNumber(data.u),
+    upLimitPrice: formatPrice(data.u),
     lastTradeTime: formatTime(data.t),
     currentVolume: data.tv || EMPTY,
     companyName: data.nf || EMPTY,
-    currentPrice: formatNumber(data.z),
-    previousClose: formatNumber(data.y)
+    currentPrice: formatPrice(data.z),
+    previousClose: formatPrice(data.y)
   }
 }
 

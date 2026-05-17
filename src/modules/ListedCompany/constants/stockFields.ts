@@ -4,18 +4,6 @@ export const EMPTY = '—'
 
 export const fieldGroups: { title: string; keys: (keyof StockData)[] }[] = [
   {
-    title: '價格',
-    keys: [
-      'openingPrice',
-      'highestPrice',
-      'lowestPrice',
-      'currentPrice',
-      'previousClose',
-      'upLimitPrice',
-      'downLimitPrice'
-    ]
-  },
-  {
     title: '交易',
     keys: [
       'lastTradeDate',
@@ -73,6 +61,8 @@ export function createEmptyStockData(): StockData {
     companyName: '',
     currentPrice: '',
     previousClose: '',
-    issueShares: ''
+    issueShares: '',
+    innerVolume: '',
+    outerVolume: ''
   }
 }

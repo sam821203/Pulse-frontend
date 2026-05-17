@@ -1,4 +1,5 @@
 import type { StockSocketPayload } from '@/api/webSocket/socketService'
+import type { ChartRecordTuple } from './chartTime'
 
 export interface ChartRecordSource {
   lastTradeDate: string
@@ -10,7 +11,7 @@ export interface ChartRecordSource {
   currentVolume: string | number
 }
 
-export function buildChartRecord(source: ChartRecordSource): string[] {
+export function buildChartRecord(source: ChartRecordSource): ChartRecordTuple {
   const date = source.lastTradeDate.replace(/(\d{4})[/-]?(\d{2})[/-]?(\d{2})/, '$1/$2/$3')
   return [
     date,
@@ -23,7 +24,7 @@ export function buildChartRecord(source: ChartRecordSource): string[] {
   ]
 }
 
-export function buildChartRecordFromSocket(data: StockSocketPayload): string[] {
+export function buildChartRecordFromSocket(data: StockSocketPayload): ChartRecordTuple {
   return buildChartRecord({
     lastTradeDate: data.lastTradeDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3'),
     lastTradeTime: data.lastTradeTime,

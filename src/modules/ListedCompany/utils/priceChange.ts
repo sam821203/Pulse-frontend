@@ -1,5 +1,6 @@
 import { EMPTY } from '../constants/stockFields'
 import type { StockData } from '../model/interface'
+import { parseNumeric } from './stockFormatters'
 
 export type PriceDirection = 'up' | 'down' | 'flat'
 
@@ -15,9 +16,10 @@ export function computeDisplayPrice(stockData: StockData): string {
 }
 
 export function computePriceChange(stockData: StockData): PriceChange {
-  const current = Number(stockData.currentPrice || stockData.previousClose)
-  const previous = Number(stockData.previousClose)
-  if (!previous || Number.isNaN(current) || Number.isNaN(previous)) {
+  const current =
+    parseNumeric(stockData.currentPrice) ?? parseNumeric(stockData.previousClose)
+  const previous = parseNumeric(stockData.previousClose)
+  if (current === null || previous === null || previous === 0) {
     return { percent: EMPTY, points: EMPTY, direction: 'flat' }
   }
   const diff = current - previous
