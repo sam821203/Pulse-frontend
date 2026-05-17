@@ -11,6 +11,7 @@ import type { ChartData, ListedCompanyData, OTCCompanyData, StockData } from '..
 import { createEmptyStockData, EMPTY } from '../constants/stockFields'
 import { buildChartRecord, buildChartRecordFromSocket } from '../utils/chartRecord'
 import { isMarketOpen } from '../utils/marketHours'
+import { createBidAskVolumeTracker } from '../utils/bidAskRatio'
 import { stockDataAdapter, toApiDate } from '../utils/stockFormatters'
 
 export interface CurrentStockQuery {
@@ -34,6 +35,7 @@ export function useStockDetail() {
 
   const pollTimerId = ref<ReturnType<typeof setTimeout> | null>(null)
   let unsubscribeStockFn: (() => void) | null = null
+  const bidAskVolumeTracker = createBidAskVolumeTracker()
 
   const seedChartFromStockData = () => {
     if (chartData.data.length > 0) return
@@ -59,7 +61,15 @@ export function useStockDetail() {
         currentStock.symbol as string
       )
       if (!resp?.msgArray?.[0]) return
-      Object.assign(stockData, stockDataAdapter(resp.msgArray[0]))
+      const raw = resp.msgArray[0] as Record<string, string>
+      const symbol = currentStock.symbol as string
+      if (raw.c !== symbol) {
+        bidAskVolumeTracker.reset(symbol)
+      }
+      bidAskVolumeTracker.accumulate(raw)
+      Object.assign(stockData, stockDataAdapter(raw))
+      stockData.innerVolume = String(bidAskVolumeTracker.innerLots)
+      stockData.outerVolume = String(bidAskVolumeTracker.outerLots)
       seedChartFromStockData()
     } catch (err) {
       console.error(err)
@@ -137,6 +147,8 @@ export function useStockDetail() {
   }
 
   const resetPageState = () => {
+    const symbol = (currentStock.symbol as string) || ''
+    bidAskVolumeTracker.reset(symbol)
     Object.assign(stockData, createEmptyStockData())
     chartData.data.length = 0
     equitiesData.value.peRatio = ''
