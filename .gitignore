@@ -17,6 +17,9 @@ coverage
 /cypress/videos/
 /cypress/screenshots/
 
+# Cursor agent skills (installed locally; see skills-lock.json)
+.agents/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
