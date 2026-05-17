@@ -21,26 +21,28 @@ Issues describe **the problem or need** — not what was implemented. Do **not**
 
 Use a prefix in the title: `[Bug]`, `[Feature]`, or `[Chore]`.
 
+**Writing style:** Under each `##` section, use **bullet lists** (`-`), not paragraphs. Prefer 2–5 short bullets per section; one idea per bullet. Omit empty sections.
+
 ### Bug
 
-- **Description** — what is wrong and user impact (1–3 sentences).
-- **Steps to reproduce** — numbered or bullet list.
-- **Expected behavior** — what should happen.
-- **Actual behavior** — what happens instead.
+- **Description** — what is wrong and user impact (bullets).
+- **Steps to reproduce** — bullet list in order.
+- **Expected behavior** — what should happen (bullets).
+- **Actual behavior** — what happens instead (bullets).
 
 Do **not** add Acceptance criteria, Test plan, or Additional context unless the user asked for environment details (browser, OS, URL) that are essential to reproduce.
 
 ### Feature
 
-- **Description** — problem or user need (1–3 sentences).
-- **Motivation** (optional) — why this matters; one short paragraph or bullets.
-- **Proposed solution** (optional) — high-level approach only if clear from context; avoid implementation detail copied from commits.
+- **Description** — problem or user need (bullets).
+- **Motivation** (optional) — why this matters (bullets).
+- **Proposed solution** (optional) — high-level approach only if clear from context (bullets); avoid implementation detail copied from commits.
 
 Do **not** add Acceptance criteria, Steps to reproduce, or branch/PR metadata.
 
 ### Chore / refactor / docs / deps
 
-- **Description** — what should improve and why (1–3 sentences).
+- **Description** — what should improve and why (bullets).
 
 No other sections unless the user explicitly requests them.
 
@@ -54,7 +56,7 @@ No other sections unless the user explicitly requests them.
 
 - Start the assistant reply with the fenced block (minimal preamble).
 - Clear, concise English.
-- One `##` heading per section; omit empty sections.
+- One `##` heading per section; body content is always bullet lists under each heading.
 
 Example (bug):
 
@@ -62,16 +64,17 @@ Example (bug):
 ## [Bug] Stock detail header shows stale price after refresh
 
 ## Description
-After a hard refresh on the company detail page, the header still shows the previous session's last price until the user navigates away.
+- After a hard refresh on the company detail page, the header still shows the previous session's last price.
+- Users cannot trust the displayed price until they navigate away.
 
 ## Steps to reproduce
-1. Open a listed company detail page and note the price in the header.
-2. Hard refresh the browser (Cmd+Shift+R).
-3. Observe the header price.
+- Open a listed company detail page and note the price in the header.
+- Hard refresh the browser (Cmd+Shift+R).
+- Observe the header price.
 
 ## Expected behavior
-The header shows the current price (or a loading state) immediately after refresh.
+- The header shows the current price or a loading state immediately after refresh.
 
 ## Actual behavior
-The header shows a stale price from the prior visit.
+- The header shows a stale price from the prior visit.
 ```
