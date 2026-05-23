@@ -38,3 +38,11 @@ export function formatPriceChangeLabel(change: PriceChange): string {
   const sign = change.direction === 'up' ? '+' : '−'
   return `${sign}${change.percent}%`
 }
+
+/** Parenthesized percent for detail header (e.g. `(+1.23%)`). */
+export function formatPriceChangePercentDisplay(change: PriceChange): string {
+  if (change.percent === EMPTY) return ''
+  if (change.direction === 'flat') return `(${change.percent}%)`
+  const sign = change.direction === 'up' ? '+' : '−'
+  return `(${sign}${change.percent}%)`
+}

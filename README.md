@@ -24,6 +24,29 @@ A real-time stock tracking and analysis platform built with Vue3. It provides re
 npm install
 ```
 
+### TypeScript type declarations
+
+Some `.d.ts` files are **generated locally** and listed in `.gitignore` (they are not committed):
+
+- `src/auto-imports.d.ts` — from [unplugin-auto-import](https://github.com/unplugin/unplugin-auto-import) (auto-imported Vue / Vue Router APIs)
+- `src/components.d.ts` — from [unplugin-vue-components](https://github.com/unplugin/unplugin-vue-components) (auto-registered components)
+
+The hand-written [`env.d.ts`](env.d.ts) **is** tracked in git (Vite client types and `*.vue` module declarations).
+
+After a fresh clone, run **one** of the following before `npm run type-check` or IDE type-checking, so those generated files exist:
+
+```sh
+npm run dev
+```
+
+or
+
+```sh
+npm run build-only
+```
+
+Vite plugins write the files on startup or build (see [`vite.config.ts`](vite.config.ts)).
+
 ### Cursor agent skills (optional)
 
 This repo tracks **project-specific** Cursor rules under `.cursor/` (committed). **Agent skills** from the open ecosystem are listed in `skills-lock.json` but installed under `.agents/skills/`, which is gitignored.

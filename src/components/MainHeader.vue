@@ -1,12 +1,9 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { checkTextOverflow } from '@/utils/text'
 
-defineProps({
-  title: {
-    type: String,
-    required: true
-  }
-})
+defineProps<{
+  title: string
+}>()
 </script>
 
 <template>

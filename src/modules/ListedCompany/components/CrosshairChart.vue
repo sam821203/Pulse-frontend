@@ -18,7 +18,7 @@ const hasChartData = computed(
   () => series.value.length > 0 && previousClose.value > 0
 )
 
-const { resize, update, destroy } = useIntradayCrosshairChart({
+const { update, destroy } = useIntradayCrosshairChart({
   containerRef: chartRef,
   series,
   previousClose

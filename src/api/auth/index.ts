@@ -1,14 +1,12 @@
 import service from '../index'
+import type { AuthApiResponse, AuthLoginData, AuthUserPayload } from './types'
 
-interface IUser {
-  name: string
-  password: string
-}
+export type { AuthApiResponse, AuthLoginData, AuthUserPayload } from './types'
 
 /**
  * 使用者登入
  */
-export const login = async (user: IUser) => {
+export const login = (user: AuthUserPayload): Promise<AuthApiResponse<AuthLoginData>> => {
   return service({
     method: 'POST',
     url: '/auth/login',
@@ -19,7 +17,7 @@ export const login = async (user: IUser) => {
 /**
  * 使用者登出
  */
-export const logout = async (token: string) => {
+export const logout = (token: string | null): Promise<unknown> => {
   return service({
     method: 'POST',
     url: '/auth/logout',
@@ -30,7 +28,7 @@ export const logout = async (token: string) => {
 /**
  * 使用者註冊
  */
-export const register = async (user: IUser) => {
+export const register = (user: AuthUserPayload): Promise<AuthApiResponse<unknown>> => {
   return service({
     method: 'POST',
     url: '/user/register',

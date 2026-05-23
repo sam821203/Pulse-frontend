@@ -1,44 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import * as d3 from 'd3'
+import type { ChartData } from '../model/interface'
 
-// 定義 `props`，接收 JSON 格式的股票數據
-const props = defineProps({
-  chartData: Object
-})
+const props = defineProps<{
+  chartData?: ChartData
+}>()
 
-const chartContainer = ref(null)
+const chartContainer = ref<HTMLElement | null>(null)
 const margin = { top: 50, right: 50, bottom: 50, left: 80 }
 const width = 800 - margin.left - margin.right
 const height = 400 - margin.top - margin.bottom
 
-// 繪製圖表的函數
 const drawChart = () => {
-  if (!chartContainer.value || !props.chartData || !props.chartData.data) return
+  if (!chartContainer.value || !props.chartData?.data) return
 
-  // 清除舊圖表
   d3.select(chartContainer.value).selectAll('*').remove()
 
-  // 轉換 JSON 數據格式
   const parseDate = d3.timeParse('%Y%m%d')
-  const data = props.chartData.data.map((d) => ({
-    Date: parseDate(d[0]), // 日期轉換
-    Close: d[1] // 收盤價
-  }))
+  const data = props.chartData.data
+    .map((d) => ({
+      Date: parseDate(String(d[0])),
+      Close: Number(d[1])
+    }))
+    .filter((d): d is { Date: Date; Close: number } => d.Date !== null)
 
-  // 設置 X 軸（時間）
+  if (data.length === 0) return
+
   const x = d3
     .scaleTime()
-    .domain(d3.extent(data, (d) => d.Date))
+    .domain(d3.extent(data, (d) => d.Date) as [Date, Date])
     .range([0, width])
 
-  // 設置 Y 軸（收盤價）
   const y = d3
     .scaleLinear()
-    .domain([d3.min(data, (d) => d.Close) * 0.9, d3.max(data, (d) => d.Close) * 1.1])
+    .domain([
+      (d3.min(data, (d) => d.Close) ?? 0) * 0.9,
+      (d3.max(data, (d) => d.Close) ?? 0) * 1.1
+    ])
     .range([height, 0])
 
-  // 創建 SVG 畫布
   const svg = d3
     .select(chartContainer.value)
     .append('svg')
@@ -47,21 +48,18 @@ const drawChart = () => {
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`)
 
-  // 添加 X 軸
   svg
     .append('g')
     .attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x).tickFormat(d3.timeFormat('%Y-%m-%d')))
+    .call(d3.axisBottom(x))
     .selectAll('text')
     .attr('transform', 'rotate(-45)')
     .style('text-anchor', 'end')
 
-  // 添加 Y 軸
   svg.append('g').call(d3.axisLeft(y))
 
-  // 繪製折線
   const line = d3
-    .line()
+    .line<{ Date: Date; Close: number }>()
     .x((d) => x(d.Date))
     .y((d) => y(d.Close))
 
@@ -74,13 +72,11 @@ const drawChart = () => {
     .attr('d', line)
 }
 
-// 當 `chartData` 更新時重新繪圖
 watch(() => props.chartData, drawChart, { deep: true })
 
-// 初次載入時繪製圖表
 onMounted(drawChart)
 </script>
 
 <template>
-  <div ref="chartContainer"></div>
+  <div ref="chartContainer" />
 </template>

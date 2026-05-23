@@ -31,3 +31,9 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Generated type declarations (unplugin-auto-import / unplugin-vue-components; see vite.config.ts)
+src/auto-imports.d.ts
+src/components.d.ts
+auto-imports.d.ts
+components.d.ts

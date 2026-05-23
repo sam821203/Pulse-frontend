@@ -18,6 +18,7 @@ const initUserInfo = async () => {
     const localUserInfo = localStorage.getItem('userInfo')
     if (localUserInfo) {
       const res = await userStore.getUserInfoData(JSON.parse(localUserInfo)._id)
+      if (!res) return
       userData.name = res.name
       userData.roles = res.roles
     } else {

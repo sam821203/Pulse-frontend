@@ -1,53 +1,51 @@
-<script setup>
+<script setup lang="ts">
 import { useLayout } from '@/layout/composables/layout'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import type { MainMenuItemConfig } from '@/config/mainMenu'
 
 const route = useRoute()
-
 const { layoutState, setActiveMenuItem, onMenuToggle } = useLayout()
 
-const props = defineProps({
-  item: {
-    type: Object,
-    default: () => ({})
-  },
-  index: {
-    type: Number,
-    default: 0
-  },
-  root: {
-    type: Boolean,
-    default: true
-  },
-  parentItemKey: {
-    type: String,
-    default: null
+const props = withDefaults(
+  defineProps<{
+    item: MainMenuItemConfig
+    index?: number
+    root?: boolean
+    parentItemKey?: string | null
+  }>(),
+  {
+    index: 0,
+    root: true,
+    parentItemKey: null
   }
-})
+)
 
 const isActiveMenu = ref(false)
-const itemKey = ref(null)
+const itemKey = ref<string>('')
 
 onBeforeMount(() => {
   itemKey.value = props.parentItemKey
-    ? props.parentItemKey + '-' + props.index
+    ? `${props.parentItemKey}-${props.index}`
     : String(props.index)
 
   const activeItem = layoutState.activeMenuItem
 
   isActiveMenu.value =
-    activeItem === itemKey.value || activeItem ? activeItem.startsWith(itemKey.value + '-') : false
+    activeItem === itemKey.value ||
+    (activeItem ? activeItem.startsWith(`${itemKey.value}-`) : false)
 })
 
 watch(
   () => layoutState.activeMenuItem,
   (newVal) => {
-    isActiveMenu.value = newVal === itemKey.value || newVal.startsWith(itemKey.value + '-')
+    isActiveMenu.value =
+      newVal === itemKey.value ||
+      (newVal != null && newVal.startsWith(`${itemKey.value}-`))
   }
 )
 
-function itemClick(event, item) {
+function itemClick(event: Event, item: MainMenuItemConfig) {
   if (item.disabled) {
     event.preventDefault()
     return
@@ -61,19 +59,19 @@ function itemClick(event, item) {
   }
 
   if (item.command) {
-    item.command({ originalEvent: event, item: item })
+    item.command({ originalEvent: event, item })
   }
 
   const foundItemKey = item.items
     ? isActiveMenu.value
       ? props.parentItemKey
-      : itemKey
+      : itemKey.value
     : itemKey.value
 
-  setActiveMenuItem(foundItemKey)
+  setActiveMenuItem(foundItemKey ?? itemKey.value)
 }
 
-function checkActiveRoute(item) {
+function checkActiveRoute(item: MainMenuItemConfig) {
   return route.path === item.to
 }
 </script>
@@ -86,7 +84,7 @@ function checkActiveRoute(item) {
     <a
       v-if="(!item.to || item.items) && item.visible !== false"
       :href="item.url"
-      @click="itemClick($event, item, index)"
+      @click="itemClick($event, item)"
       :class="item.class"
       :target="item.target"
       tabindex="0"
@@ -97,7 +95,7 @@ function checkActiveRoute(item) {
     </a>
     <router-link
       v-if="item.to && !item.items && item.visible !== false"
-      @click="itemClick($event, item, index)"
+      @click="itemClick($event, item)"
       :class="[item.class, { 'active-route': checkActiveRoute(item) }]"
       tabindex="0"
       :to="item.to"
@@ -110,12 +108,12 @@ function checkActiveRoute(item) {
       <ul v-show="root ? true : isActiveMenu" class="layout-submenu">
         <MainMenuItem
           v-for="(child, i) in item.items"
-          :key="child"
+          :key="child.label"
           :index="i"
           :item="child"
-          :parentItemKey="itemKey"
+          :parent-item-key="itemKey"
           :root="false"
-        ></MainMenuItem>
+        />
       </ul>
     </Transition>
   </li>

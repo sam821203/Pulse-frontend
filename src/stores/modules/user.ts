@@ -6,15 +6,15 @@ export const useUserStore = defineStore('user', () => {
   const event = ref('')
   const userInfo = ref<UserData | null>(null)
 
-  // 取得使用者資訊
-  const getUserInfoData = async (userId: string): Promise<any> => {
+  const getUserInfoData = async (userId: string): Promise<UserData | undefined> => {
     try {
       const res = await getUserInfo(userId)
       userInfo.value = res
       localStorage.setItem('userInfo', JSON.stringify(res))
       return res
     } catch (error) {
-      return error
+      console.error(error)
+      return undefined
     }
   }
 
@@ -24,7 +24,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
   }
 
-  const setEvent = (eventName: any) => {
+  const setEvent = (eventName: string) => {
     event.value = eventName
   }
 

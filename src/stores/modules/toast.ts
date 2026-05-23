@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-// TODO: 為何已經 auto import 了，還要再 import 一次？
 import { nextTick, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 
@@ -7,7 +6,7 @@ export const useToastStore = defineStore('toastMsg', () => {
   const toastMsg = ref('')
   const toast = useToast()
 
-  const toastAction = (msg: any) => {
+  const toastAction = (msg: string) => {
     console.log(msg)
   }
 

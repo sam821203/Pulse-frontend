@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { register } from '../../api/auth/index'
 import { yupResolver } from '@primevue/forms/resolvers/yup'
 import { useToast } from 'primevue/usetoast'
@@ -24,7 +24,7 @@ const schema = yup.object().shape({
 
 const resolver = yupResolver(schema)
 
-const handleRegister = async ({ valid }) => {
+const handleRegister = async ({ valid }: { valid: boolean }) => {
   if (valid) {
     const res = await register(formData)
     if (res.code === 0) {
@@ -60,8 +60,8 @@ const handleRegister = async ({ valid }) => {
           placeholder="請輸入使用者名稱"
           fluid
         />
-        <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">{{
-          $form.name.error.message
+        <Message v-if="$form.states?.name?.invalid" severity="error" size="small" variant="simple">{{
+          $form.states.name.error?.message
         }}</Message>
       </div>
       <div class="flex flex-col gap-1">
@@ -77,9 +77,13 @@ const handleRegister = async ({ valid }) => {
           toggleMask
           fluid
         />
-        <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">{{
-          $form.password.error.message
-        }}</Message>
+        <Message
+          v-if="$form.states?.password?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+          >{{ $form.states.password.error?.message }}</Message
+        >
       </div>
       <Button label="註冊" type="submit" class="w-full mt-2 mb-8" />
     </Form>
