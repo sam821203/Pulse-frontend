@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { login } from '../../api/auth/index'
 import router from '@/router/index'
 import { yupResolver } from '@primevue/forms/resolvers/yup'
 import loading from '@/utils/loading'
 import * as yup from 'yup'
 import { useUserStore, useToastStore } from '@/stores'
-import isEmpty from 'lodash/isEmpty'
+import { isEmpty } from 'lodash'
 import { storeToRefs } from 'pinia'
 
 const userStore = useUserStore()
@@ -33,7 +33,7 @@ const schema = yup.object().shape({
 
 const resolver = yupResolver(schema)
 
-const handleLogin = async ({ valid }) => {
+const handleLogin = async ({ valid }: { valid: boolean }) => {
   loading.start()
   try {
     if (valid) {
@@ -84,8 +84,8 @@ const handleLogin = async ({ valid }) => {
           placeholder="請輸入使用者名稱"
           fluid
         />
-        <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">{{
-          $form.name.error.message
+        <Message v-if="$form.states?.name?.invalid" severity="error" size="small" variant="simple">{{
+          $form.states.name.error?.message
         }}</Message>
       </div>
       <div class="flex flex-col gap-1">
@@ -101,9 +101,13 @@ const handleLogin = async ({ valid }) => {
           toggleMask
           fluid
         />
-        <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">{{
-          $form.password.error.message
-        }}</Message>
+        <Message
+          v-if="$form.states?.password?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+          >{{ $form.states.password.error?.message }}</Message
+        >
       </div>
       <Button label="登入" type="submit" class="w-full mt-2 mb-8" />
     </Form>

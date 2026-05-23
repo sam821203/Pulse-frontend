@@ -1,29 +1,30 @@
-<script setup>
+<script setup lang="ts">
 import { useLayout } from '@/layout/composables/layout'
 import { useUserStore } from '@/stores'
-import { useStockStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useConfirm } from 'primevue/useconfirm'
 import { logout } from '../api/auth/index'
 import loading from '@/utils/loading'
 import AutoComplete from 'primevue/autocomplete'
-import { getStockInfo } from '@/api/stock/index'
-import { useToast } from 'primevue/usetoast'
+import { useStockSearch } from '@/composables/useStockSearch'
+import type { MenuItem } from 'primevue/menuitem'
 
 const router = useRouter()
 const userStore = useUserStore()
-const stockStore = useStockStore()
 const confirm = useConfirm()
-const toast = useToast()
 
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout()
 const { userInfo } = storeToRefs(userStore)
-const { allStocksData } = storeToRefs(stockStore)
 
-const menu = ref()
-const inputValue = ref('')
-const allStocks = ref([])
-const marketType = ref('')
+const {
+  inputValue,
+  searchItems,
+  handleSearchStock,
+  search,
+  loadStockSuggestions
+} = useStockSearch()
+
+const menu = ref<{ toggle: (event: Event) => void } | null>(null)
 
 const handleLogout = async () => {
   loading.start()
@@ -39,7 +40,7 @@ const handleLogout = async () => {
   }
 }
 
-const confirm1 = () => {
+const confirmLogout = () => {
   confirm.require({
     message: '請問您確定要登出嗎?',
     header: '登出',
@@ -56,7 +57,7 @@ const confirm1 = () => {
   })
 }
 
-const items = ref([
+const items = ref<MenuItem[]>([
   {
     label: '',
     items: [
@@ -71,106 +72,32 @@ const items = ref([
         label: '登出',
         icon: 'pi pi-sign-out',
         command: () => {
-          confirm1()
+          confirmLogout()
         }
       }
     ]
   }
 ])
 
-const toggle = (event) => {
-  menu.value.toggle(event)
-}
-
-const fetchStockInfo = async (params) => {
-  try {
-    const resp = await getStockInfo(params)
-    if (resp.code === 2) {
-      toast.add({
-        severity: 'error',
-        summary: resp.msg,
-        life: 3000
-      })
-    } else {
-      return resp.data
-    }
-  } catch (err) {
-    console.error(err)
-    throw err
-  }
-}
-
-const handleSearchStock = async () => {
-  if (!inputValue.value) return
-  const match = inputValue.value.match(/\d+/)
-  const stockSymbol = match ? match[0] : ''
-  const params = match ? { symbol: stockSymbol } : { name: inputValue.value }
-  try {
-    const resp = await fetchStockInfo(params)
-    const { market, symbol, industry } = resp
-    marketType.value = market === '上市' ? 'tse' : 'otc'
-    router.push({
-      path: '/listedCompany/detail',
-      query: { symbol, industry, market: marketType.value }
-    })
-  } catch (err) {
-    console.log('err', err)
-  }
-}
-
-const listAdapter = async () => {
-  allStocks.value = allStocksData.value.map((stock) => `${stock.symbol} ${stock.name}`)
-}
-
-const searchItems = ref([])
-
-const search = ({ query }) => {
-  searchItems.value = allStocks.value.filter((item) => {
-    let regex
-    if (/[\u4e00-\u9fa5]/.test(query)) {
-      regex = new RegExp(`${query}`, 'i')
-    } else {
-      regex = new RegExp(`^${query}`, 'i')
-    }
-    return regex.test(item)
-  })
+const toggle = (event: Event) => {
+  menu.value?.toggle(event)
 }
 
 watch(userInfo, (newUserInfo) => {
-  if (newUserInfo) {
+  if (newUserInfo && items.value[0]) {
     items.value[0].label = newUserInfo.name
   }
 })
 
 onMounted(async () => {
-  if (userInfo.value) {
+  if (userInfo.value && items.value[0]) {
     items.value[0].label = userInfo.value.name
   }
-
-  await stockStore.getAllStocksData()
-  await listAdapter()
+  await loadStockSuggestions()
 })
 </script>
 
 <template>
-  <input type="text" id="searchInput" placeholder="搜尋..." style="width: 100%; padding: 8px" />
-  <ul
-    id="suggestionList"
-    style="
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      border: 1px solid #ccc;
-      border-top: none;
-      max-height: 150px;
-      overflow-y: auto;
-      position: absolute;
-      width: 100%;
-      display: none;
-      background-color: white;
-      z-index: 1000;
-    "
-  ></ul>
   <div class="layout-topbar border-b">
     <div class="layout-topbar-logo-container">
       <button class="layout-menu-button layout-topbar-action" @click="onMenuToggle">

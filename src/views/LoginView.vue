@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // import { useUserStore } from '@/stores'
 // import { storeToRefs } from 'pinia'
 import LoginForm from '@/components/login/LoginForm.vue'
@@ -10,7 +10,7 @@ import RegisterForm from '@/components/login/RegisterForm.vue'
 // const checked = ref(false)
 // const currentEvent = ref('login')
 
-const tabs = ref([
+const tabs = ref<{ title: string; value: string }[]>([
   { title: '登入', value: '0' },
   { title: '註冊', value: '1' }
 ])

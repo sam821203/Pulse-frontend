@@ -72,7 +72,7 @@ const drawChart = () => {
     .attr('stroke-width', 1.5)
 
   // 使用 d3.bisector() 找到滑鼠的 X 軸 index 值
-  const bisect = d3.bisector((d: { [x: string]: any }) => d['發病年週']).left
+  const bisect = d3.bisector((d: ChartData) => d['發病年週']).left
 
   // 建立沿著折線移動的圓點點
   const focus = svg
@@ -163,7 +163,7 @@ const drawChart = () => {
     .attr('height', rwdSvgHeight - margin)
     .style('cursor', 'pointer')
     .on('mouseover', mouseover)
-    .on('mousemove', (event: any) => mousemove(event))
+    .on('mousemove', (event: MouseEvent) => mousemove(event))
     .on('mouseout', mouseout)
 }
 

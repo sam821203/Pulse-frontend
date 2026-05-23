@@ -50,7 +50,7 @@ export function formatIntradayTooltip(point: ParsedChartPoint): string {
   const time = normalizeTime(point.raw[1]).slice(0, 5)
   const price = Number.isFinite(point.close) ? point.close.toFixed(1) : '—'
   const volume = Number.isFinite(point.volume) ? String(Math.round(point.volume)) : '—'
-  return `時間 ${time}　價格 ${price}　成交量 ${volume}`
+  return `時間 ${time} | 價格 ${price} | 成交量 ${volume}`
 }
 
 export function buildIntradaySeries(rows: string[][]): ParsedChartPoint[] {
